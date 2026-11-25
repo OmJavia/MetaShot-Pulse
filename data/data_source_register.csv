@@ -1,0 +1,10 @@
+source_id,provider,classification,data_available,api_available,cost,restrictions,recommended_usage,last_reviewed
+SRC-001,Official company website,free_public,portfolio locations company claims,sometimes,free,robots terms and rate limits,primary evidence,2026-11-25
+SRC-002,SEC EDGAR,free_public,public issuer filings,yes,free,public issuer scope,corporate verification,2026-11-25
+SRC-003,US Census Business Builder,free_public,aggregate business data,tool/download,free,not account-level enrichment,market planning,2026-11-25
+SRC-004,SAM.gov,free_registration,procurement/vendor data,yes,free,public procurement scope,optional public signal,2026-11-25
+SRC-005,Apollo,paid_api,company and contact enrichment,yes,credits,plan endpoint and usage restrictions,user-authorized enrichment,2026-11-25
+SRC-006,Clay,paid_api,workflow orchestration and provider marketplace,plan_dependent,credits/actions,provider terms and credit metering,optional connector,2026-11-25
+SRC-007,HubSpot,user_provided_or_paid,CRM records enrichment intent,yes,subscription,workspace authorization,CRM sync,2026-11-25
+SRC-008,User CSV,user_provided,accounts and contacts,n/a,n/a,user authority and privacy obligations,ingestion with provenance,2026-11-25
+SRC-009,LinkedIn or gated databases,restricted_or_unsuitable,profiles and contacts,restricted,unknown,no scraping or bypassing access controls,do not use,2026-11-25
