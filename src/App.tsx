@@ -344,7 +344,7 @@ export default function App() {
                     notify('Appointment confirmed. Confirmation dispatch sent.')
                   }}
                 >
-                  <span className="chroma-text-out chroma-text-out-animate" data-text="Confirm Appointment">
+                  <span className="chroma-text-out chroma-text-out-animate">
                     Confirm Appointment
                   </span>
                   <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
@@ -419,7 +419,7 @@ function Overview({
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
               onClick={onOpenBooking}
             >
-              <span className="chroma-text-out chroma-text-out-animate" data-text="Book Appointment">
+              <span className="chroma-text-out chroma-text-out-animate">
                 Book Appointment
               </span>
               <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
@@ -1020,7 +1020,7 @@ function AccountsView({
                   notify(`${selected.name} staged for briefing.`)
                 }}
               >
-                <span className="chroma-text-out chroma-text-out-animate" data-text={`Book Briefing for ${selected.name}`}>
+                <span className="chroma-text-out chroma-text-out-animate">
                   Book Briefing for {selected.name}
                 </span>
                 <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>

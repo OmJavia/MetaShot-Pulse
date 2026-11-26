@@ -132,9 +132,38 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    .chroma-text-animate-parent with .chroma-text-out and .tabler-icon-arrow-right
    ========================================================================== */
 
+/* ==========================================================================
+   SIGNATURE CHROMA BUTTON & HOVER TRANSITION
+   Exact implementation from page3-dewas.vercel.app
+   ========================================================================== */
+
+/* Tailwind class helpers for the target button */
+.inline-flex { display: inline-flex; }
+.shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.gap-2 { gap: 0.5rem; }
+.rounded-2xl { border-radius: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.font-bold { font-weight: 700; }
+.tracking-\[-0\.011em\] { letter-spacing: -0.011em; }
+.bg-neutral-950 { background-color: #0a0a0a; }
+.text-white { color: #ffffff; }
+.hover\:bg-neutral-800:hover { background-color: #262626; }
+.dark .dark\:bg-white, html.dark .dark\:bg-white, html[data-theme='dark'] .dark\:bg-white { background-color: #ffffff; }
+.dark .dark\:text-neutral-950, html.dark .dark\:text-neutral-950, html[data-theme='dark'] .dark\:text-neutral-950 { color: #0a0a0a; }
+.dark .dark\:hover\:bg-neutral-100:hover, html.dark .dark\:hover\:bg-neutral-100:hover, html[data-theme='dark'] .dark\:hover\:bg-neutral-100:hover { background-color: #f5f5f5; }
+.shadow-\[0_2px_8px_rgba\(0\,0\,0\,0\.15\)\] { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+.h-12 { height: 3rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.w-full { width: 100%; }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.cursor-pointer { cursor: pointer; }
+.transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+
 .chroma-text-animate-parent {
   position: relative;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -143,120 +172,103 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: -0.011em;
-  background-color: #09090b;
+  background-color: #0a0a0a;
   color: #ffffff;
   height: 3rem;
   padding: 0.625rem 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.25s var(--ease-spring);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dark .chroma-text-animate-parent,
-html[data-theme='dark'] .chroma-text-animate-parent {
+html[data-theme='dark'] .chroma-text-animate-parent,
+html.dark .chroma-text-animate-parent {
   background-color: #ffffff;
-  color: #09090b;
+  color: #0a0a0a;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
 }
 
 .chroma-text-animate-parent:hover {
   background-color: #262626;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .dark .chroma-text-animate-parent:hover,
-html[data-theme='dark'] .chroma-text-animate-parent:hover {
-  background-color: #f4f4f5;
-  box-shadow: 0 6px 22px rgba(255, 255, 255, 0.2);
+html[data-theme='dark'] .chroma-text-animate-parent:hover,
+html.dark .chroma-text-animate-parent:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
 }
 
 .chroma-text-animate-parent:active {
-  transform: translateY(0.5px) scale(0.985);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: scale(0.985);
 }
 
-/* Arrow Slide Transition */
+/* Arrow Slide Transition: exact page3 spec */
 .tabler-icon-arrow-right,
-.transition-transform,
-.chroma-text-animate-parent .arrow-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  transition: transform 0.25s var(--ease-spring);
+.transition-transform {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .chroma-text-animate-parent:hover .tabler-icon-arrow-right,
-.chroma-text-animate-parent:hover .transition-transform,
-.chroma-text-animate-parent:hover .arrow-icon {
-  transform: translateX(5px);
+.chroma-text-animate-parent:hover .transition-transform {
+  transform: translate(3px);
 }
 
-/* Rolling Dual-Layer Text Slide Animation */
-.chroma-text-out {
-  display: inline-flex;
-  position: relative;
-  overflow: hidden;
-  height: 1.3em;
-  line-height: 1.3em;
-}
-
-.chroma-text-out-animate {
-  display: inline-flex;
-  flex-direction: column;
-  transition: transform 0.3s var(--ease-spring);
-  position: relative;
-}
-
-.chroma-text-out-animate::after {
-  content: attr(data-text);
-  display: block;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  text-align: inherit;
+/* Chroma Text Sweep: exact page3-dewas.vercel.app keyframe & gradient */
+.chroma-text,
+.chroma-text--pro,
+.chroma-text-animate,
+.chroma-text-animate-repeat,
+.chroma-text-loading,
+.chroma-text-out,
+.chroma-text-out-animate,
+.pro-chroma-heading {
+  font: inherit;
+  z-index: 1;
   color: inherit;
+  -webkit-text-fill-color: currentColor;
+  background: 0 0;
+  transition: all 0.2s;
+  display: inline;
+  position: relative;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: inherit !important;
+  -webkit-text-decoration: inherit !important;
+  text-decoration: inherit !important;
 }
 
-.chroma-text-animate-parent:hover .chroma-text-out-animate {
-  transform: translateY(-100%);
+.chroma-text-animate-parent:focus .chroma-text-out-animate,
+.chroma-text-animate-parent:hover .chroma-text-out-animate,
+.chroma-text-out-animate:focus,
+.chroma-text-out-animate:hover {
+  will-change: background-position;
+  -webkit-text-fill-color: transparent !important;
+  background-image: linear-gradient(90deg, currentColor 0 20%, #c679c4 35%, #fa3d1d 45%, #ffb005 55%, #e1e1fe 65%, #0358f7 75%, currentColor 85% 100%) !important;
+  background-size: 250% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  animation: chroma-sweep-repeat 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite !important;
 }
 
-/* Subtle Shimmer Sheen on parent */
-.chroma-text-animate-parent::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 50%,
-    transparent 100%
-  );
-  transform: skewX(-20deg);
-  transition: left 0.6s ease;
-  pointer-events: none;
-}
-
-.dark .chroma-text-animate-parent::before {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.08) 50%,
-    transparent 100%
-  );
-}
-
-.chroma-text-animate-parent:hover::before {
-  left: 150%;
+@keyframes chroma-sweep-repeat {
+  0% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
 }
 
 /* ==========================================================================
