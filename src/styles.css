@@ -305,6 +305,64 @@ html.dark .chroma-text-animate-parent:hover {
   margin-bottom: 1.25rem;
 }
 
+.brand-logo-img {
+  height: 26px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  display: block;
+  transition: filter 0.25s ease;
+}
+
+.dark .brand-logo-img,
+html.dark .brand-logo-img,
+html[data-theme='dark'] .brand-logo-img {
+  filter: brightness(0) invert(1);
+}
+
+/* Skeleton Shimmer Animation for Lazy Loading */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-tertiary);
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.15) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+.dark .skeleton-shimmer::after,
+html.dark .skeleton-shimmer::after,
+html[data-theme='dark'] .skeleton-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0)
+  );
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .brand-mark {
   width: 28px;
   height: 28px;

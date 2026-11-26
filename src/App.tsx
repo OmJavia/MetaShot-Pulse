@@ -1,28 +1,18 @@
-import { ChangeEvent, useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import Papa from 'papaparse'
 import {
   ArrowRight, BarChart3, Bell, Bot, Calendar, Check, ChevronDown, CircleHelp,
-  ClipboardCheck, Database, Download, FileText, Filter, Globe2, Inbox, Layers3,
+  ClipboardCheck, Cpu, Database, Download, FileText, Filter, Globe2, Inbox, Layers3,
   LayoutDashboard, Moon, MoreHorizontal, Plus, Search, Send, Settings, ShieldCheck,
   SlidersHorizontal, Sparkles, Sun, Target, Users, X, Zap
 } from 'lucide-react'
 import { metashotData } from './metashotData'
+import { Account, Role, ImportSummary, ImportRecord } from './types'
+import { ViewLoadingSkeleton } from './components/Skeleton'
 
-type Stage = 'Primary market' | 'Expand research' | 'Review location' | 'Emerging market' | 'Data incomplete'
-type Account = {
-  id: string
-  name: string
-  initials: string
-  category: string
-  place: string
-  coverage: string
-  fit: number
-  confidence: number
-  stage: Stage
-  evidence: number
-  freshness: string
-  signal?: string
-}
+// LAZY LOADED SUB-MODULES (SHOWCASING ROUTE/VIEW LEVEL CODE SPLITTING)
+const Overview = lazy(() => import('./views/Overview'))
+const SmartBatHub = lazy(() => import('./views/SmartBatHub'))
 
 const accounts: Account[] = [
   { id: 'MKT-IN', name: 'India', initials: 'IN', category: 'Declared customer market', place: '202,558 download records', coverage: '105,502 device-country signals', fit: 87, confidence: 0.924, stage: 'Primary market', evidence: 3, freshness: '2024–Sep 2026', signal: 'Dominant market audience (87%)' },
@@ -35,6 +25,7 @@ const accounts: Account[] = [
 
 const nav = [
   ['Overview', LayoutDashboard],
+  ['Smart Bat Hub', Cpu],
   ['Imports', Database],
   ['Customers', Users],
   ['Segments', Target],
@@ -45,26 +36,6 @@ const nav = [
   ['Insights', BarChart3],
   ['Reports', FileText]
 ] as const
-
-type Role = 'Admin' | 'Analyst' | 'Viewer'
-type ImportSummary = {
-  fileName: string
-  importedAt: string
-  records: number
-  uniqueEmails: number
-  countryCoverage: number
-  missingDeviceCountry: number
-  malformedRows: number
-  topCountries: { name: string; count: number }[]
-  piiFields: string[]
-  sourceYear: string
-  validationIssues: string[]
-}
-type ImportRecord = Pick<ImportSummary, 'fileName' | 'importedAt' | 'records' | 'uniqueEmails' | 'malformedRows' | 'sourceYear'> & {
-  status: 'Processed' | 'Needs review'
-  actor: string
-  duplicates: number
-}
 
 const demoHistory: ImportRecord[] = [
   { fileName: 'synthetic-users-2026-q3.csv', importedAt: 'Demo seed · Sep 2026', records: 12540, uniqueEmails: 12186, malformedRows: 0, sourceYear: '2026', status: 'Processed', actor: 'Demo admin', duplicates: 354 },
@@ -88,7 +59,6 @@ export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false)
 
   useEffect(() => {
-    // Apply dark class to document element
     if (darkMode) {
       document.documentElement.classList.add('dark')
       document.documentElement.setAttribute('data-theme', 'dark')
@@ -142,14 +112,18 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* SHADCN MINIMALIST MONOCHROME SIDEBAR */}
+      {/* SHADCN MINIMALIST MONOCHROME SIDEBAR WITH OFFICIAL METASHOT LOGO */}
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark">M</div>
-          <div className="brand-text">
-            <span>MetaShot</span>
-            <span className="brand-badge">Pulse</span>
-          </div>
+          <img
+            src="/metashot-logo.png"
+            alt="MetaShot"
+            className="brand-logo-img"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+          <span className="brand-badge">Pulse</span>
         </div>
 
         <div className="workspace-card">
@@ -173,6 +147,7 @@ export default function App() {
               >
                 <Icon size={16} />
                 <span>{name}</span>
+                {name === 'Smart Bat Hub' && <span className="nav-badge" style={{ fontSize: '0.6rem' }}>NEW</span>}
                 {name === 'Data quality' && <span className="nav-badge">3</span>}
               </button>
             ))}
@@ -205,7 +180,7 @@ export default function App() {
         {/* FROSTED STICKY TOPBAR */}
         <header className="topbar">
           <div className="breadcrumbs">
-            <span>Workspace</span>
+            <span>MetaShot</span>
             <span className="text-muted">/</span>
             <span className="breadcrumb-active">{active}</span>
           </div>
@@ -261,44 +236,50 @@ export default function App() {
           </div>
         </header>
 
-        {/* INNER CONTENT CONTAINER */}
+        {/* INNER CONTENT CONTAINER (WRAPPED IN SUSPENSE FOR LAZY LOADING) */}
         <section className="content-wrapper">
-          {active === 'Overview' && (
-            <Overview
-              onNavigate={setActive}
-              onSelect={a => { setSelected(a); setActive('Customers') }}
-              importSummary={importSummary}
-              onOpenBooking={() => setBookingOpen(true)}
-            />
-          )}
-          {active === 'Imports' && (
-            <ImportCenter onCommit={commitImport} history={history} canImport={role !== 'Viewer'} />
-          )}
-          {active === 'Customers' && (
-            <AccountsView
-              accounts={filtered}
-              query={query}
-              setQuery={setQuery}
-              selected={selected}
-              setSelected={setSelected}
-              showPanel={showPanel}
-              setShowPanel={setShowPanel}
-              notify={notify}
-              onOpenBooking={() => setBookingOpen(true)}
-            />
-          )}
-          {active === 'Segments' && <MetashotSegments notify={notify} />}
-          {active === 'Activation Lab' && <ActivationLab notify={notify} />}
-          {active === 'Data quality' && <MetashotQuality notify={notify} />}
-          {active === 'Campaigns' && (
-            <MetashotCampaigns approved={draftApproved} setApproved={setDraftApproved} notify={notify} />
-          )}
-          {active === 'Journeys' && <MetashotJourneys />}
-          {active === 'Insights' && <MetashotInsights />}
-          {active === 'Reports' && <ReportsView history={history} role={role} notify={notify} />}
-          {active === 'Settings' && (
-            <GovernanceCenter ready={governanceReady} setReady={setGovernanceReady} notify={notify} />
-          )}
+          <Suspense fallback={<ViewLoadingSkeleton />}>
+            {active === 'Overview' && (
+              <Overview
+                onNavigate={setActive}
+                onSelect={a => { setSelected(a); setActive('Customers') }}
+                importSummary={importSummary}
+                onOpenBooking={() => setBookingOpen(true)}
+                accounts={accounts}
+              />
+            )}
+            {active === 'Smart Bat Hub' && (
+              <SmartBatHub onOpenBooking={() => setBookingOpen(true)} />
+            )}
+            {active === 'Imports' && (
+              <ImportCenter onCommit={commitImport} history={history} canImport={role !== 'Viewer'} />
+            )}
+            {active === 'Customers' && (
+              <AccountsView
+                accounts={filtered}
+                query={query}
+                setQuery={setQuery}
+                selected={selected}
+                setSelected={setSelected}
+                showPanel={showPanel}
+                setShowPanel={setShowPanel}
+                notify={notify}
+                onOpenBooking={() => setBookingOpen(true)}
+              />
+            )}
+            {active === 'Segments' && <MetashotSegments notify={notify} />}
+            {active === 'Activation Lab' && <ActivationLab notify={notify} />}
+            {active === 'Data quality' && <MetashotQuality notify={notify} />}
+            {active === 'Campaigns' && (
+              <MetashotCampaigns approved={draftApproved} setApproved={setDraftApproved} notify={notify} />
+            )}
+            {active === 'Journeys' && <MetashotJourneys />}
+            {active === 'Insights' && <MetashotInsights />}
+            {active === 'Reports' && <ReportsView history={history} role={role} notify={notify} />}
+            {active === 'Settings' && (
+              <GovernanceCenter ready={governanceReady} setReady={setGovernanceReady} notify={notify} />
+            )}
+          </Suspense>
         </section>
       </main>
 
@@ -310,13 +291,13 @@ export default function App() {
         </div>
       )}
 
-      {/* BOOK APPOINTMENT MODAL (FEATURING THE SIGNATURE BUTTON) */}
+      {/* BOOK APPOINTMENT MODAL (FEATURING THE EXACT SIGNATURE BUTTON WITH CHROMA WAVE) */}
       {bookingOpen && (
         <div className="dialog-overlay" onClick={() => setBookingOpen(false)}>
           <div className="dialog-content" onClick={e => e.stopPropagation()}>
             <div className="dialog-header">
-              <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Schedule Intelligence Briefing</h2>
-              <p className="card-desc">Reserve a dedicated 30-minute walkthrough with our customer analytics architect.</p>
+              <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Schedule SmartBat Briefing</h2>
+              <p className="card-desc">Reserve a dedicated 30-minute hardware walkthrough and telemetry review with MetaShot.</p>
               <button className="dialog-close" onClick={() => setBookingOpen(false)} aria-label="Close dialog">
                 <X size={18} />
               </button>
@@ -332,10 +313,10 @@ export default function App() {
               </div>
               <div className="form-group">
                 <label className="form-label">Consultation Focus</label>
-                <input className="form-input" defaultValue="Review 2026 Customer Intelligence & Activation Funnel" />
+                <input className="form-input" defaultValue="Smart Bat TV Kit & Motion Telemetry Review" />
               </div>
               <div style={{ marginTop: '0.75rem' }}>
-                {/* THE EXACT SIGNATURE BUTTON WITH HOVER TRANSITION */}
+                {/* THE SIGNATURE BUTTON WITH CHROMATIC WAVE HOVER SWEEP */}
                 <button
                   type="button"
                   className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
@@ -359,289 +340,7 @@ export default function App() {
 }
 
 /* ==========================================================================
-   VIEW 1: OVERVIEW DASHBOARD
-   ========================================================================== */
-
-function Overview({
-  onNavigate,
-  onSelect,
-  importSummary,
-  onOpenBooking
-}: {
-  onNavigate: (s: string) => void
-  onSelect: (a: Account) => void
-  importSummary: ImportSummary | null
-  onOpenBooking: () => void
-}) {
-  return (
-    <>
-      <div className="page-header">
-        <div className="page-header-info">
-          <span className="page-eyebrow">Customer Intelligence · 2024–2026 Analysis</span>
-          <h1 className="page-title">
-            Executive Overview <span className="badge badge-outline">Live Aggregates</span>
-          </h1>
-          <p className="page-subtitle">
-            {importSummary
-              ? `Profiled export: ${importSummary.fileName} (${importSummary.records.toLocaleString()} rows) · Local privacy-safe compute`
-              : 'Continuous privacy-safe customer intelligence synthesized from 232,970 application records.'}
-          </p>
-        </div>
-
-        <div className="page-header-actions">
-          <button className="btn btn-outline" onClick={() => onNavigate('Data quality')}>
-            <ShieldCheck size={15} />
-            <span>Audit Health</span>
-          </button>
-          <button className="btn btn-primary" onClick={() => onNavigate(importSummary ? 'Data quality' : 'Imports')}>
-            <Sparkles size={15} />
-            <span>{importSummary ? 'Review Profile' : 'Import Export'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* SIGNATURE HERO INTERACTION CARD (FEATURING THE EXACT BUTTON SPEC) */}
-      <section className="shadcn-card" style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
-          <div>
-            <span className="badge badge-solid" style={{ marginBottom: '0.625rem' }}>Direct Opportunity</span>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: '0.35rem' }}>
-              Accelerate Market Activation for 215k Customers
-            </h2>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '580px' }}>
-              87% of all verified downloads originate in India with strong device concentration. Connect with an activation advisor to deploy the physical-to-digital onboarding workflow.
-            </p>
-          </div>
-          <div style={{ maxWidth: '340px', justifySelf: 'end', width: '100%' }}>
-            {/* THE EXACT USER-SPECIFIED BUTTON */}
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
-              onClick={onOpenBooking}
-            >
-              <span className="chroma-text-out chroma-text-out-animate">
-                Book Appointment
-              </span>
-              <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 4 CORE METRICS IN SHADCN MONOCHROME */}
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Download Records</span>
-            <div className="metric-icon-wrap"><Users size={16} /></div>
-          </div>
-          <div className="metric-value">232,970</div>
-          <div className="metric-meta">
-            <span className="badge badge-outline">2024–Sep 2026</span>
-            <span>Total export count</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Unique Email Keys</span>
-            <div className="metric-icon-wrap"><Target size={16} /></div>
-          </div>
-          <div className="metric-value">215,940</div>
-          <div className="metric-meta">
-            <span className="badge badge-outline">92.7% unique</span>
-            <span>Normalized identifiers</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">2026 Run Rate</span>
-            <div className="metric-icon-wrap"><ClipboardCheck size={16} /></div>
-          </div>
-          <div className="metric-value">95,519</div>
-          <div className="metric-meta">
-            <span className="badge badge-outline">Through Sep 9</span>
-            <span>Pacing above 2025</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Location Coverage</span>
-            <div className="metric-icon-wrap"><ShieldCheck size={16} /></div>
-          </div>
-          <div className="metric-value">92.4%</div>
-          <div className="metric-meta">
-            <span className="badge badge-outline">215.2k valid</span>
-            <span>Declared country</span>
-          </div>
-        </div>
-      </div>
-
-      {/* DASHBOARD GRID: GROWTH & ATTENTION QUEUE */}
-      <div className="dashboard-grid">
-        {/* Growth Tracking */}
-        <section className="shadcn-card">
-          <div className="card-header">
-            <div>
-              <h2 className="card-title">Download Velocity by Year</h2>
-              <p className="card-desc">Volume progression across the audited application archives</p>
-            </div>
-            <button className="btn btn-ghost" onClick={() => onNavigate('Insights')}>
-              <span>View Insights</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="funnel-container">
-            <div className="funnel-item">
-              <div className="funnel-meta">
-                <span className="funnel-meta-label">2024 Baseline</span>
-                <span className="funnel-meta-value">37,649 records (16.2%)</span>
-              </div>
-              <div className="funnel-bar-track">
-                <div className="funnel-bar-fill" style={{ width: '38%' }}></div>
-              </div>
-            </div>
-
-            <div className="funnel-item">
-              <div className="funnel-meta">
-                <span className="funnel-meta-label">2025 Scale Year</span>
-                <span className="funnel-meta-value">99,802 records (42.8%)</span>
-              </div>
-              <div className="funnel-bar-track">
-                <div className="funnel-bar-fill" style={{ width: '100%' }}></div>
-              </div>
-            </div>
-
-            <div className="funnel-item">
-              <div className="funnel-meta">
-                <span className="funnel-meta-label">2026 Partial (Jan 1 – Sep 9)</span>
-                <span className="funnel-meta-value">95,519 records (41.0%)</span>
-              </div>
-              <div className="funnel-bar-track">
-                <div className="funnel-bar-fill" style={{ width: '96%' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.875rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            <span>Audited dataset: 232,970 records</span>
-            <span>*2026 data ends Sep 9</span>
-          </div>
-        </section>
-
-        {/* Data Quality & Action Queue */}
-        <section className="shadcn-card">
-          <div className="card-header">
-            <div>
-              <h2 className="card-title">Safeguards & Attention</h2>
-              <p className="card-desc">Governance rules before activation outreach</p>
-            </div>
-            <button className="btn btn-ghost" onClick={() => onNavigate('Data quality')}>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="attention-list">
-            <div className="attention-item">
-              <div className="attention-badge"><FileText size={15} /></div>
-              <div className="attention-body">
-                <div className="attention-title">17,715 records lack declared country</div>
-                <div className="attention-desc">Isolated in unresolved segment to maintain clean benchmarks.</div>
-              </div>
-              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onSelect(accounts[5])}>
-                Review
-              </button>
-            </div>
-
-            <div className="attention-item">
-              <div className="attention-badge"><Bot size={15} /></div>
-              <div className="attention-body">
-                <div className="attention-title">10,860 repeated email keys</div>
-                <div className="attention-desc">Identified for deduplication; not counted as distinct persons.</div>
-              </div>
-              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onNavigate('Data quality')}>
-                Inspect
-              </button>
-            </div>
-
-            <div className="attention-item">
-              <div className="attention-badge"><ShieldCheck size={15} /></div>
-              <div className="attention-body">
-                <div className="attention-title">Zero raw customer PII rendered</div>
-                <div className="attention-desc">Pure aggregate storage architecture protects user privacy.</div>
-              </div>
-              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onNavigate('Customers')}>
-                Verify
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* TOP DECLARED MARKETS TABLE IN SHADCN DESIGN */}
-      <section className="shadcn-card">
-        <div className="card-header">
-          <div>
-            <h2 className="card-title">Top Declared Geography Segments</h2>
-            <p className="card-desc">Aggregated customer distribution across verified markets</p>
-          </div>
-          <button className="btn btn-outline" onClick={() => onNavigate('Customers')}>
-            <span>All Customer Markets</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
-
-        <div className="table-wrapper">
-          <table className="shadcn-table">
-            <thead>
-              <tr>
-                <th>Market Segment</th>
-                <th>Share</th>
-                <th>Download Volume</th>
-                <th>Device Signal Presence</th>
-                <th>Readiness</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.slice(0, 5).map(a => (
-                <tr key={a.id} onClick={() => { onSelect(a); onNavigate('Customers') }}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span className="market-avatar">{a.initials}</span>
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{a.category}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{a.fit}%</span>
-                      <div style={{ width: '48px', height: '4px', background: 'var(--border-subtle)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ width: `${a.fit}%`, height: '100%', background: 'var(--text-primary)' }}></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--font-mono)' }}>{a.place}</td>
-                  <td>{a.coverage}</td>
-                  <td>
-                    <span className="badge badge-outline">{a.stage}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </>
-  )
-}
-
-/* ==========================================================================
-   VIEW 2: IMPORTS CENTER (CSV PROCESSING)
+   VIEW: IMPORTS CENTER (CSV PROCESSING)
    ========================================================================== */
 
 function ImportCenter({
@@ -854,7 +553,7 @@ function ImportCenter({
 }
 
 /* ==========================================================================
-   VIEW 3: CUSTOMERS & MARKETS TABLE + DETAIL DRAWER
+   VIEW: CUSTOMERS & MARKETS TABLE + DETAIL DRAWER
    ========================================================================== */
 
 function AccountsView({
@@ -1011,7 +710,6 @@ function AccountsView({
             )}
 
             <div style={{ marginTop: '0.5rem' }}>
-              {/* THE SIGNATURE BUTTON WITH HOVER TRANSITION IN DRAWER */}
               <button
                 type="button"
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
@@ -1034,7 +732,7 @@ function AccountsView({
 }
 
 /* ==========================================================================
-   VIEW 4: SEGMENTS
+   VIEW: SEGMENTS
    ========================================================================== */
 
 function MetashotSegments({ notify }: { notify: (m: string) => void }) {
@@ -1119,7 +817,7 @@ function MetashotSegments({ notify }: { notify: (m: string) => void }) {
 }
 
 /* ==========================================================================
-   VIEW 5: ACTIVATION LAB
+   VIEW: ACTIVATION LAB
    ========================================================================== */
 
 function ActivationLab({ notify }: { notify: (m: string) => void }) {
@@ -1289,7 +987,7 @@ function ActivationLab({ notify }: { notify: (m: string) => void }) {
 }
 
 /* ==========================================================================
-   VIEW 6: DATA QUALITY
+   VIEW: DATA QUALITY
    ========================================================================== */
 
 function MetashotQuality({ notify }: { notify: (m: string) => void }) {
@@ -1339,7 +1037,7 @@ function MetashotQuality({ notify }: { notify: (m: string) => void }) {
 }
 
 /* ==========================================================================
-   VIEW 7: CAMPAIGNS
+   VIEW: CAMPAIGNS
    ========================================================================== */
 
 function MetashotCampaigns({
@@ -1418,7 +1116,7 @@ function MetashotCampaigns({
 }
 
 /* ==========================================================================
-   VIEW 8: JOURNEYS (KANBAN BOARD)
+   VIEW: JOURNEYS (KANBAN BOARD)
    ========================================================================== */
 
 function MetashotJourneys() {
@@ -1469,7 +1167,7 @@ function MetashotJourneys() {
 }
 
 /* ==========================================================================
-   VIEW 9: INSIGHTS
+   VIEW: INSIGHTS
    ========================================================================== */
 
 function MetashotInsights() {
@@ -1510,7 +1208,7 @@ function MetashotInsights() {
 }
 
 /* ==========================================================================
-   VIEW 10: REPORTS
+   VIEW: REPORTS
    ========================================================================== */
 
 function ReportsView({
@@ -1572,7 +1270,7 @@ function ReportsView({
 }
 
 /* ==========================================================================
-   VIEW 11: GOVERNANCE & SETTINGS
+   VIEW: GOVERNANCE & SETTINGS
    ========================================================================== */
 
 function GovernanceCenter({
