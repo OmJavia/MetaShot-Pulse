@@ -1,1 +1,11 @@
-@media(max-width:760px){.lab-tabs{width:100%;overflow:auto}.activation-grid{grid-template-columns:1fr}.activation-side,.experiment-card{padding:16px}.contract-card{padding:16px}}
+/* Additional mobile tweaks for lab tabs and contracts */
+@media (max-width: 640px) {
+  .shadcn-tabs {
+    width: 100%;
+    display: flex;
+  }
+  .shadcn-tab-btn {
+    flex: 1;
+    text-align: center;
+  }
+}

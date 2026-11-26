@@ -1,32 +1,76 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import Papa from 'papaparse'
 import {
-  ArrowRight, BarChart3, Bell, Bot, Check, ChevronDown, CircleHelp, ClipboardCheck, Database,
-  FileText, Filter, Globe2, Inbox, Layers3, LayoutDashboard, MoreHorizontal, Plus,
-  Search, Send, Settings, ShieldCheck, SlidersHorizontal, Sparkles, Target, Users,
-  X, Zap
+  ArrowRight, BarChart3, Bell, Bot, Calendar, Check, ChevronDown, CircleHelp,
+  ClipboardCheck, Database, Download, FileText, Filter, Globe2, Inbox, Layers3,
+  LayoutDashboard, Moon, MoreHorizontal, Plus, Search, Send, Settings, ShieldCheck,
+  SlidersHorizontal, Sparkles, Sun, Target, Users, X, Zap
 } from 'lucide-react'
 import { metashotData } from './metashotData'
 
 type Stage = 'Primary market' | 'Expand research' | 'Review location' | 'Emerging market' | 'Data incomplete'
-type Account = { id: string; name: string; initials: string; color: string; category: string; place: string; coverage: string; fit: number; confidence: number; stage: Stage; evidence: number; freshness: string; signal?: string }
+type Account = {
+  id: string
+  name: string
+  initials: string
+  category: string
+  place: string
+  coverage: string
+  fit: number
+  confidence: number
+  stage: Stage
+  evidence: number
+  freshness: string
+  signal?: string
+}
 
 const accounts: Account[] = [
-  { id:'MKT-IN', name:'India', initials:'IN', color:'#DC6B42', category:'Declared customer market', place:'202,558 download records', coverage:'105,502 device-country signals', fit:87, confidence:0.924, stage:'Primary market', evidence:3, freshness:'2024–Sep 2026', signal:'Largest installed audience' },
-  { id:'MKT-PK', name:'Pakistan', initials:'PK', color:'#409F8D', category:'Declared customer market', place:'4,518 download records', coverage:'4,554 device-country signals', fit:2, confidence:0.924, stage:'Expand research', evidence:3, freshness:'2024–Sep 2026', signal:'Second declared market' },
-  { id:'MKT-AU', name:'Australia', initials:'AU', color:'#567FC0', category:'Declared customer market', place:'3,473 download records', coverage:'413 device-country signals', fit:1.5, confidence:0.924, stage:'Review location', evidence:3, freshness:'2024–Sep 2026' },
-  { id:'MKT-BD', name:'Bangladesh', initials:'BD', color:'#9D6FCE', category:'Declared customer market', place:'2,537 download records', coverage:'1,261 device-country signals', fit:1.1, confidence:0.924, stage:'Emerging market', evidence:3, freshness:'2024–Sep 2026' },
-  { id:'MKT-GB', name:'United Kingdom', initials:'GB', color:'#D69A36', category:'Declared customer market', place:'1,593 download records', coverage:'746 device-country signals', fit:0.7, confidence:0.924, stage:'Emerging market', evidence:3, freshness:'2024–Sep 2026' },
-  { id:'MKT-XX', name:'Unresolved location', initials:'??', color:'#D04C72', category:'Data-quality segment', place:'17,715 download records', coverage:'No declared country', fit:7.6, confidence:0.0, stage:'Data incomplete', evidence:1, freshness:'2024–Sep 2026' },
+  { id: 'MKT-IN', name: 'India', initials: 'IN', category: 'Declared customer market', place: '202,558 download records', coverage: '105,502 device-country signals', fit: 87, confidence: 0.924, stage: 'Primary market', evidence: 3, freshness: '2024–Sep 2026', signal: 'Dominant market audience (87%)' },
+  { id: 'MKT-PK', name: 'Pakistan', initials: 'PK', category: 'Declared customer market', place: '4,518 download records', coverage: '4,554 device-country signals', fit: 2, confidence: 0.924, stage: 'Expand research', evidence: 3, freshness: '2024–Sep 2026', signal: 'Second largest declared base' },
+  { id: 'MKT-AU', name: 'Australia', initials: 'AU', category: 'Declared customer market', place: '3,473 download records', coverage: '413 device-country signals', fit: 1.5, confidence: 0.924, stage: 'Review location', evidence: 3, freshness: '2024–Sep 2026' },
+  { id: 'MKT-BD', name: 'Bangladesh', initials: 'BD', category: 'Declared customer market', place: '2,537 download records', coverage: '1,261 device-country signals', fit: 1.1, confidence: 0.924, stage: 'Emerging market', evidence: 3, freshness: '2024–Sep 2026' },
+  { id: 'MKT-GB', name: 'United Kingdom', initials: 'GB', category: 'Declared customer market', place: '1,593 download records', coverage: '746 device-country signals', fit: 0.7, confidence: 0.924, stage: 'Emerging market', evidence: 3, freshness: '2024–Sep 2026' },
+  { id: 'MKT-XX', name: 'Unresolved location', initials: '??', category: 'Data-quality segment', place: '17,715 download records', coverage: 'No declared country', fit: 7.6, confidence: 0.0, stage: 'Data incomplete', evidence: 1, freshness: '2024–Sep 2026' },
 ]
 
 const nav = [
-  ['Overview', LayoutDashboard], ['Imports', Database], ['Customers', Users], ['Segments', Target], ['Activation Lab', Zap], ['Data quality', Sparkles], ['Campaigns', Send], ['Journeys', Layers3], ['Insights', BarChart3]
+  ['Overview', LayoutDashboard],
+  ['Imports', Database],
+  ['Customers', Users],
+  ['Segments', Target],
+  ['Activation Lab', Zap],
+  ['Data quality', Sparkles],
+  ['Campaigns', Send],
+  ['Journeys', Layers3],
+  ['Insights', BarChart3],
+  ['Reports', FileText]
 ] as const
 
-type ImportSummary = { fileName:string; importedAt:string; records:number; uniqueEmails:number; countryCoverage:number; missingDeviceCountry:number; malformedRows:number; topCountries:{name:string;count:number}[]; piiFields:string[]; sourceYear:string }
+type Role = 'Admin' | 'Analyst' | 'Viewer'
+type ImportSummary = {
+  fileName: string
+  importedAt: string
+  records: number
+  uniqueEmails: number
+  countryCoverage: number
+  missingDeviceCountry: number
+  malformedRows: number
+  topCountries: { name: string; count: number }[]
+  piiFields: string[]
+  sourceYear: string
+  validationIssues: string[]
+}
+type ImportRecord = Pick<ImportSummary, 'fileName' | 'importedAt' | 'records' | 'uniqueEmails' | 'malformedRows' | 'sourceYear'> & {
+  status: 'Processed' | 'Needs review'
+  actor: string
+  duplicates: number
+}
 
-const stageClass = (stage: Stage) => `stage ${stage.toLowerCase().replaceAll(' ', '-')}`
+const demoHistory: ImportRecord[] = [
+  { fileName: 'synthetic-users-2026-q3.csv', importedAt: 'Demo seed · Sep 2026', records: 12540, uniqueEmails: 12186, malformedRows: 0, sourceYear: '2026', status: 'Processed', actor: 'Demo admin', duplicates: 354 },
+  { fileName: 'synthetic-events-2026-q2.csv', importedAt: 'Demo seed · Jun 2026', records: 48320, uniqueEmails: 0, malformedRows: 7, sourceYear: '2026', status: 'Needs review', actor: 'Demo analyst', duplicates: 0 }
+]
+
 const formatPercent = (n: number) => `${Math.round(n * 100)}%`
 
 export default function App() {
@@ -38,85 +82,592 @@ export default function App() {
   const [showPanel, setShowPanel] = useState(true)
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null)
   const [governanceReady, setGovernanceReady] = useState(false)
-  useEffect(() => { const stored = localStorage.getItem('metashot-pulse-import-summary'); if (stored) { try { setImportSummary(JSON.parse(stored)) } catch { localStorage.removeItem('metashot-pulse-import-summary') } } }, [])
-  const commitImport = (summary:ImportSummary) => { setImportSummary(summary); localStorage.setItem('metashot-pulse-import-summary', JSON.stringify(summary)); notify(`${summary.fileName} profiled locally. Only the aggregate summary was saved.`) }
-  const filtered = useMemo(() => accounts.filter(a => a.name.toLowerCase().includes(query.toLowerCase()) || a.category.toLowerCase().includes(query.toLowerCase())), [query])
-  const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2600) }
+  const [role, setRole] = useState<Role>('Admin')
+  const [history, setHistory] = useState<ImportRecord[]>(demoHistory)
+  const [darkMode, setDarkMode] = useState(true)
+  const [bookingOpen, setBookingOpen] = useState(false)
 
-  return <div className="app-shell">
-    <aside className="sidebar">
-      <div className="brand"><div className="brand-mark"><span></span><span></span><span></span></div><span>Meta<span>Shot</span></span></div>
-      <div className="workspace"><div className="workspace-avatar">MS</div><div><b>MetaShot</b><small>Customer intelligence</small></div><ChevronDown size={15}/></div>
-      <nav>{nav.map(([name, Icon]) => <button key={name} aria-label={name} title={name} className={active === name ? 'nav-item active' : 'nav-item'} onClick={() => setActive(name)}><Icon size={18}/><span>{name}</span>{name === 'Data quality' && <i>3</i>}</button>)}</nav>
-      <div className="sidebar-bottom"><button aria-label="Settings" title="Settings" className={active === 'Settings' ? 'nav-item active' : 'nav-item'} onClick={()=>setActive('Settings')}><Settings size={18}/><span>Settings</span></button><div className="profile"><div className="profile-face">OM</div><div><b>Om Javia</b><small>Admin</small></div><MoreHorizontal size={17}/></div></div>
-    </aside>
+  useEffect(() => {
+    // Apply dark class to document element
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      document.documentElement.setAttribute('data-theme', 'light')
+    }
+  }, [darkMode])
 
-    <main className="main">
-      <header className="topbar"><div className="crumb"><span>Workspace</span><ArrowRight size={13}/><b>{active}</b></div><div className="top-actions"><button className="icon-button"><CircleHelp size={18}/></button><button className="icon-button bell"><Bell size={18}/><em></em></button><button className="button secondary" onClick={() => setActive('Imports')}><Plus size={16}/> Import CSV</button></div></header>
-      <section className="content">
-        {active === 'Overview' ? <Overview onNavigate={setActive} onSelect={a => { setSelected(a); setActive('Customers') }} importSummary={importSummary} /> : null}
-        {active === 'Imports' ? <ImportCenter onCommit={commitImport} /> : null}
-        {active === 'Customers' ? <AccountsView accounts={filtered} query={query} setQuery={setQuery} selected={selected} setSelected={setSelected} showPanel={showPanel} setShowPanel={setShowPanel} notify={notify} /> : null}
-        {active === 'Segments' ? <MetashotSegments notify={notify} /> : null}
-        {active === 'Activation Lab' ? <ActivationLab notify={notify} /> : null}
-        {active === 'Data quality' ? <MetashotQuality notify={notify} /> : null}
-        {active === 'Campaigns' ? <MetashotCampaigns approved={draftApproved} setApproved={setDraftApproved} notify={notify} /> : null}
-        {active === 'Journeys' ? <MetashotJourneys /> : null}
-        {active === 'Insights' ? <MetashotInsights /> : null}
-        {active === 'Settings' ? <GovernanceCenter ready={governanceReady} setReady={setGovernanceReady} notify={notify} /> : null}
+  useEffect(() => {
+    const stored = localStorage.getItem('metashot-pulse-import-summary')
+    const audit = localStorage.getItem('metashot-pulse-import-history')
+    if (stored) {
+      try { setImportSummary(JSON.parse(stored)) } catch { localStorage.removeItem('metashot-pulse-import-summary') }
+    }
+    if (audit) {
+      try { setHistory(JSON.parse(audit)) } catch { localStorage.removeItem('metashot-pulse-import-history') }
+    }
+  }, [])
+
+  const commitImport = (summary: ImportSummary) => {
+    const record: ImportRecord = {
+      fileName: summary.fileName,
+      importedAt: summary.importedAt,
+      records: summary.records,
+      uniqueEmails: summary.uniqueEmails,
+      malformedRows: summary.malformedRows,
+      sourceYear: summary.sourceYear,
+      status: summary.validationIssues.length ? 'Needs review' : 'Processed',
+      actor: `Demo ${role.toLowerCase()}`,
+      duplicates: Math.max(0, summary.records - summary.uniqueEmails)
+    }
+    const next = [record, ...history]
+    setImportSummary(summary)
+    setHistory(next)
+    localStorage.setItem('metashot-pulse-import-summary', JSON.stringify(summary))
+    localStorage.setItem('metashot-pulse-import-history', JSON.stringify(next))
+    notify(`${summary.fileName} aggregated successfully into audit log.`)
+  }
+
+  const filtered = useMemo(() =>
+    accounts.filter(a =>
+      a.name.toLowerCase().includes(query.toLowerCase()) ||
+      a.category.toLowerCase().includes(query.toLowerCase())
+    ), [query])
+
+  const notify = (message: string) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), 2800)
+  }
+
+  return (
+    <div className="app-shell">
+      {/* SHADCN MINIMALIST MONOCHROME SIDEBAR */}
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">M</div>
+          <div className="brand-text">
+            <span>MetaShot</span>
+            <span className="brand-badge">Pulse</span>
+          </div>
+        </div>
+
+        <div className="workspace-card">
+          <div className="workspace-avatar">MP</div>
+          <div className="workspace-info">
+            <span className="workspace-name">MetaShot Intelligence</span>
+            <span className="workspace-sub">232.9k Records · Q3</span>
+          </div>
+          <ChevronDown size={14} className="text-muted" />
+        </div>
+
+        <div className="nav-group">
+          <div className="nav-label">Navigation</div>
+          <nav>
+            {nav.map(([name, Icon]) => (
+              <button
+                key={name}
+                aria-label={name}
+                className={`nav-item ${active === name ? 'active' : ''}`}
+                onClick={() => setActive(name)}
+              >
+                <Icon size={16} />
+                <span>{name}</span>
+                {name === 'Data quality' && <span className="nav-badge">3</span>}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="sidebar-footer">
+          <button
+            aria-label="Settings"
+            className={`nav-item ${active === 'Settings' ? 'active' : ''}`}
+            onClick={() => setActive('Settings')}
+          >
+            <Settings size={16} />
+            <span>Workspace Settings</span>
+          </button>
+
+          <div className="user-profile">
+            <div className="user-avatar">OJ</div>
+            <div className="user-info">
+              <span className="user-name">Om Javia</span>
+              <span className="user-role">{role} Access</span>
+            </div>
+            <MoreHorizontal size={14} className="text-muted" />
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN VIEWPORT */}
+      <main className="main">
+        {/* FROSTED STICKY TOPBAR */}
+        <header className="topbar">
+          <div className="breadcrumbs">
+            <span>Workspace</span>
+            <span className="text-muted">/</span>
+            <span className="breadcrumb-active">{active}</span>
+          </div>
+
+          <div className="top-actions">
+            {/* Dark / Light Toggle */}
+            <button
+              className="icon-btn"
+              onClick={() => setDarkMode(!darkMode)}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label="Toggle theme mode"
+            >
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            {/* Role Switcher */}
+            <label className="role-pill">
+              <span>Role:</span>
+              <select
+                aria-label="Demo role"
+                value={role}
+                onChange={e => setRole(e.target.value as Role)}
+              >
+                <option>Admin</option>
+                <option>Analyst</option>
+                <option>Viewer</option>
+              </select>
+            </label>
+
+            {/* Quick Demo Appointment Trigger */}
+            <button
+              className="btn btn-outline"
+              onClick={() => setBookingOpen(true)}
+              style={{ height: '36px', padding: '0 12px' }}
+            >
+              <Calendar size={14} />
+              <span>Book Appointment</span>
+            </button>
+
+            <button className="icon-btn" title="Help & Documentation">
+              <CircleHelp size={16} />
+            </button>
+            <button className="icon-btn" title="Notifications">
+              <Bell size={16} />
+            </button>
+
+            {role !== 'Viewer' && (
+              <button className="btn btn-primary" onClick={() => setActive('Imports')}>
+                <Plus size={14} />
+                <span>Import CSV</span>
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* INNER CONTENT CONTAINER */}
+        <section className="content-wrapper">
+          {active === 'Overview' && (
+            <Overview
+              onNavigate={setActive}
+              onSelect={a => { setSelected(a); setActive('Customers') }}
+              importSummary={importSummary}
+              onOpenBooking={() => setBookingOpen(true)}
+            />
+          )}
+          {active === 'Imports' && (
+            <ImportCenter onCommit={commitImport} history={history} canImport={role !== 'Viewer'} />
+          )}
+          {active === 'Customers' && (
+            <AccountsView
+              accounts={filtered}
+              query={query}
+              setQuery={setQuery}
+              selected={selected}
+              setSelected={setSelected}
+              showPanel={showPanel}
+              setShowPanel={setShowPanel}
+              notify={notify}
+              onOpenBooking={() => setBookingOpen(true)}
+            />
+          )}
+          {active === 'Segments' && <MetashotSegments notify={notify} />}
+          {active === 'Activation Lab' && <ActivationLab notify={notify} />}
+          {active === 'Data quality' && <MetashotQuality notify={notify} />}
+          {active === 'Campaigns' && (
+            <MetashotCampaigns approved={draftApproved} setApproved={setDraftApproved} notify={notify} />
+          )}
+          {active === 'Journeys' && <MetashotJourneys />}
+          {active === 'Insights' && <MetashotInsights />}
+          {active === 'Reports' && <ReportsView history={history} role={role} notify={notify} />}
+          {active === 'Settings' && (
+            <GovernanceCenter ready={governanceReady} setReady={setGovernanceReady} notify={notify} />
+          )}
+        </section>
+      </main>
+
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="toast-container">
+          <Check size={16} />
+          <span>{toast}</span>
+        </div>
+      )}
+
+      {/* BOOK APPOINTMENT MODAL (FEATURING THE SIGNATURE BUTTON) */}
+      {bookingOpen && (
+        <div className="dialog-overlay" onClick={() => setBookingOpen(false)}>
+          <div className="dialog-content" onClick={e => e.stopPropagation()}>
+            <div className="dialog-header">
+              <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Schedule Intelligence Briefing</h2>
+              <p className="card-desc">Reserve a dedicated 30-minute walkthrough with our customer analytics architect.</p>
+              <button className="dialog-close" onClick={() => setBookingOpen(false)} aria-label="Close dialog">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="dialog-body">
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input className="form-input" defaultValue="Om Javia" placeholder="Your name" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Work Email</label>
+                <input className="form-input" defaultValue="om@metashot.pulse" placeholder="you@company.com" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Consultation Focus</label>
+                <input className="form-input" defaultValue="Review 2026 Customer Intelligence & Activation Funnel" />
+              </div>
+              <div style={{ marginTop: '0.75rem' }}>
+                {/* THE EXACT SIGNATURE BUTTON WITH HOVER TRANSITION */}
+                <button
+                  type="button"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
+                  onClick={() => {
+                    setBookingOpen(false)
+                    notify('Appointment confirmed. Confirmation dispatch sent.')
+                  }}
+                >
+                  <span className="chroma-text-out chroma-text-out-animate" data-text="Confirm Appointment">
+                    Confirm Appointment
+                  </span>
+                  <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ==========================================================================
+   VIEW 1: OVERVIEW DASHBOARD
+   ========================================================================== */
+
+function Overview({
+  onNavigate,
+  onSelect,
+  importSummary,
+  onOpenBooking
+}: {
+  onNavigate: (s: string) => void
+  onSelect: (a: Account) => void
+  importSummary: ImportSummary | null
+  onOpenBooking: () => void
+}) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Customer Intelligence · 2024–2026 Analysis</span>
+          <h1 className="page-title">
+            Executive Overview <span className="badge badge-outline">Live Aggregates</span>
+          </h1>
+          <p className="page-subtitle">
+            {importSummary
+              ? `Profiled export: ${importSummary.fileName} (${importSummary.records.toLocaleString()} rows) · Local privacy-safe compute`
+              : 'Continuous privacy-safe customer intelligence synthesized from 232,970 application records.'}
+          </p>
+        </div>
+
+        <div className="page-header-actions">
+          <button className="btn btn-outline" onClick={() => onNavigate('Data quality')}>
+            <ShieldCheck size={15} />
+            <span>Audit Health</span>
+          </button>
+          <button className="btn btn-primary" onClick={() => onNavigate(importSummary ? 'Data quality' : 'Imports')}>
+            <Sparkles size={15} />
+            <span>{importSummary ? 'Review Profile' : 'Import Export'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SIGNATURE HERO INTERACTION CARD (FEATURING THE EXACT BUTTON SPEC) */}
+      <section className="shadcn-card" style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
+          <div>
+            <span className="badge badge-solid" style={{ marginBottom: '0.625rem' }}>Direct Opportunity</span>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: '0.35rem' }}>
+              Accelerate Market Activation for 215k Customers
+            </h2>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '580px' }}>
+              87% of all verified downloads originate in India with strong device concentration. Connect with an activation advisor to deploy the physical-to-digital onboarding workflow.
+            </p>
+          </div>
+          <div style={{ maxWidth: '340px', justifySelf: 'end', width: '100%' }}>
+            {/* THE EXACT USER-SPECIFIED BUTTON */}
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
+              onClick={onOpenBooking}
+            >
+              <span className="chroma-text-out chroma-text-out-animate" data-text="Book Appointment">
+                Book Appointment
+              </span>
+              <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
+            </button>
+          </div>
+        </div>
       </section>
-    </main>
-    {toast && <div className="toast"><Check size={17}/>{toast}</div>}
-  </div>
+
+      {/* 4 CORE METRICS IN SHADCN MONOCHROME */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-label">Download Records</span>
+            <div className="metric-icon-wrap"><Users size={16} /></div>
+          </div>
+          <div className="metric-value">232,970</div>
+          <div className="metric-meta">
+            <span className="badge badge-outline">2024–Sep 2026</span>
+            <span>Total export count</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-label">Unique Email Keys</span>
+            <div className="metric-icon-wrap"><Target size={16} /></div>
+          </div>
+          <div className="metric-value">215,940</div>
+          <div className="metric-meta">
+            <span className="badge badge-outline">92.7% unique</span>
+            <span>Normalized identifiers</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-label">2026 Run Rate</span>
+            <div className="metric-icon-wrap"><ClipboardCheck size={16} /></div>
+          </div>
+          <div className="metric-value">95,519</div>
+          <div className="metric-meta">
+            <span className="badge badge-outline">Through Sep 9</span>
+            <span>Pacing above 2025</span>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-label">Location Coverage</span>
+            <div className="metric-icon-wrap"><ShieldCheck size={16} /></div>
+          </div>
+          <div className="metric-value">92.4%</div>
+          <div className="metric-meta">
+            <span className="badge badge-outline">215.2k valid</span>
+            <span>Declared country</span>
+          </div>
+        </div>
+      </div>
+
+      {/* DASHBOARD GRID: GROWTH & ATTENTION QUEUE */}
+      <div className="dashboard-grid">
+        {/* Growth Tracking */}
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Download Velocity by Year</h2>
+              <p className="card-desc">Volume progression across the audited application archives</p>
+            </div>
+            <button className="btn btn-ghost" onClick={() => onNavigate('Insights')}>
+              <span>View Insights</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          <div className="funnel-container">
+            <div className="funnel-item">
+              <div className="funnel-meta">
+                <span className="funnel-meta-label">2024 Baseline</span>
+                <span className="funnel-meta-value">37,649 records (16.2%)</span>
+              </div>
+              <div className="funnel-bar-track">
+                <div className="funnel-bar-fill" style={{ width: '38%' }}></div>
+              </div>
+            </div>
+
+            <div className="funnel-item">
+              <div className="funnel-meta">
+                <span className="funnel-meta-label">2025 Scale Year</span>
+                <span className="funnel-meta-value">99,802 records (42.8%)</span>
+              </div>
+              <div className="funnel-bar-track">
+                <div className="funnel-bar-fill" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+
+            <div className="funnel-item">
+              <div className="funnel-meta">
+                <span className="funnel-meta-label">2026 Partial (Jan 1 – Sep 9)</span>
+                <span className="funnel-meta-value">95,519 records (41.0%)</span>
+              </div>
+              <div className="funnel-bar-track">
+                <div className="funnel-bar-fill" style={{ width: '96%' }}></div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.875rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <span>Audited dataset: 232,970 records</span>
+            <span>*2026 data ends Sep 9</span>
+          </div>
+        </section>
+
+        {/* Data Quality & Action Queue */}
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Safeguards & Attention</h2>
+              <p className="card-desc">Governance rules before activation outreach</p>
+            </div>
+            <button className="btn btn-ghost" onClick={() => onNavigate('Data quality')}>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          <div className="attention-list">
+            <div className="attention-item">
+              <div className="attention-badge"><FileText size={15} /></div>
+              <div className="attention-body">
+                <div className="attention-title">17,715 records lack declared country</div>
+                <div className="attention-desc">Isolated in unresolved segment to maintain clean benchmarks.</div>
+              </div>
+              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onSelect(accounts[5])}>
+                Review
+              </button>
+            </div>
+
+            <div className="attention-item">
+              <div className="attention-badge"><Bot size={15} /></div>
+              <div className="attention-body">
+                <div className="attention-title">10,860 repeated email keys</div>
+                <div className="attention-desc">Identified for deduplication; not counted as distinct persons.</div>
+              </div>
+              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onNavigate('Data quality')}>
+                Inspect
+              </button>
+            </div>
+
+            <div className="attention-item">
+              <div className="attention-badge"><ShieldCheck size={15} /></div>
+              <div className="attention-body">
+                <div className="attention-title">Zero raw customer PII rendered</div>
+                <div className="attention-desc">Pure aggregate storage architecture protects user privacy.</div>
+              </div>
+              <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} onClick={() => onNavigate('Customers')}>
+                Verify
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* TOP DECLARED MARKETS TABLE IN SHADCN DESIGN */}
+      <section className="shadcn-card">
+        <div className="card-header">
+          <div>
+            <h2 className="card-title">Top Declared Geography Segments</h2>
+            <p className="card-desc">Aggregated customer distribution across verified markets</p>
+          </div>
+          <button className="btn btn-outline" onClick={() => onNavigate('Customers')}>
+            <span>All Customer Markets</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+
+        <div className="table-wrapper">
+          <table className="shadcn-table">
+            <thead>
+              <tr>
+                <th>Market Segment</th>
+                <th>Share</th>
+                <th>Download Volume</th>
+                <th>Device Signal Presence</th>
+                <th>Readiness</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.slice(0, 5).map(a => (
+                <tr key={a.id} onClick={() => { onSelect(a); onNavigate('Customers') }}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className="market-avatar">{a.initials}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{a.category}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{a.fit}%</span>
+                      <div style={{ width: '48px', height: '4px', background: 'var(--border-subtle)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ width: `${a.fit}%`, height: '100%', background: 'var(--text-primary)' }}></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{a.place}</td>
+                  <td>{a.coverage}</td>
+                  <td>
+                    <span className="badge badge-outline">{a.stage}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  )
 }
 
-function Overview({ onNavigate, onSelect, importSummary }: { onNavigate:(s:string)=>void; onSelect:(a:Account)=>void; importSummary:ImportSummary | null }) {
-  return <>
-    <div className="page-heading"><div><p className="eyebrow">MetaShot · Download intelligence</p><h1>Your customer picture, clearly <span>✦</span></h1><p className="subtle">{importSummary ? `${importSummary.fileName} profiled locally · aggregate-only workspace` : 'Privacy-safe download trends from the 2024–2026 application exports.'}</p></div><button className="button primary" onClick={() => onNavigate(importSummary ? 'Data quality' : 'Imports')}><Sparkles size={16}/>{importSummary ? 'Review data' : 'Import CSV'}</button></div>
-    <div className="metric-grid">
-      <Metric label="Download records" value="232,970" delta="2024–Sep 2026" icon={<Users size={18}/>} color="mint" />
-      <Metric label="Unique email keys" value="215,940" delta="Normalized across exports" icon={<Target size={18}/>} color="blue" />
-      <Metric label="2026 records" value="95,519" delta="Jan 1–Sep 9 only" icon={<ClipboardCheck size={18}/>} color="amber" />
-      <Metric label="Location coverage" value="92.4%" delta="Declared country present" icon={<ShieldCheck size={18}/>} color="violet" />
-    </div>
-    <div className="dashboard-grid">
-      <section className="card funnel-card"><div className="card-title"><div><h2>Download growth</h2><p>Raw export counts · 2026 is a partial year</p></div><button className="text-button" onClick={() => onNavigate('Insights')}>Open insights <ArrowRight size={14}/></button></div><div className="funnel"><FunnelRow label="2024" count="37,649" pct={38} color="#A1CDBC" /><FunnelRow label="2025" count="99,802" pct={100} color="#67AA94" /><FunnelRow label="2026 to Sep 9" count="95,519" pct={96} color="#387D68" /></div><div className="funnel-foot"><span><i className="dot mint"></i> 232,970 total download records</span><span>Not a full-year comparison</span></div></section>
-      <section className="card attention-card"><div className="card-title"><div><h2>Data attention queue</h2><p>Make analysis safer before activation</p></div><button className="circle-button" onClick={() => onNavigate('Data quality')}><ArrowRight size={16}/></button></div><div className="attention-list"><Attention icon={<FileText size={16}/>} color="orange" title="17,715 records lack declared country" meta="Keep them in a separate unresolved-location segment" action="Review" onClick={() => { onSelect(accounts[5]) }} /><Attention icon={<Bot size={16}/>} color="purple" title="10,860 repeated email keys" meta="Candidates for deduplication, not confirmed duplicate people" action="Inspect" onClick={() => onNavigate('Data quality')} /><Attention icon={<ShieldCheck size={16}/>} color="green" title="Keep raw customer PII off the browser" meta="Use aggregate views until secure access controls exist" action="View" onClick={() => onNavigate('Customers')} /></div></section>
-    </div>
-    <div className="dashboard-grid bottom-grid"><section className="card account-preview"><div className="card-title"><div><h2>Top declared markets</h2><p>Aggregated customer geography, not individual profiles</p></div><button className="text-button" onClick={() => onNavigate('Customers')}>All markets <ArrowRight size={14}/></button></div><div className="mini-table"><div className="table-row table-head"><span>Market</span><span>Share</span><span>Source</span><span>Readiness</span></div>{accounts.slice(0,4).map(a => <div className="table-row clickable" key={a.id} onClick={() => { onSelect(a); onNavigate('Customers') }}><AccountIdentity account={a}/><Score value={a.fit}/><span className="evidence"><ShieldCheck size={14}/>CSV aggregate</span><span className={stageClass(a.stage)}>{a.stage}</span></div>)}</div></section><section className="card quality-card"><div className="card-title"><div><h2>Data health</h2><p>Input quality across all exports</p></div><button className="icon-button"><MoreHorizontal size={18}/></button></div><div className="quality-number"><strong>92.4%</strong><span>Declared-country completeness</span></div><div className="bar-chart">{[38,100,96].map((h,i)=><div key={i} className="bar-wrap"><div className="bar" style={{height:`${h}%`}}></div><small>{['2024','2025','2026*'][i]}</small></div>)}</div><div className="quality-foot"><span><i className="dot mint"></i> Country data present</span><span><i className="dot gray"></i> *Partial year</span></div></section></div>
-  </>
-}
+/* ==========================================================================
+   VIEW 2: IMPORTS CENTER (CSV PROCESSING)
+   ========================================================================== */
 
-function Metric({ label,value,delta,icon,color}:{label:string;value:string;delta:string;icon:React.ReactNode;color:string}) { return <section className="metric card"><div className={`metric-icon ${color}`}>{icon}</div><p>{label}</p><strong>{value}</strong><small>{delta}</small></section> }
-function FunnelRow({label,count,pct,color}:{label:string;count:string;pct:number;color:string}) { return <div className="funnel-row"><div><span>{label}</span><b>{count}</b></div><div className="funnel-track"><div style={{width:`${pct}%`, background:color}}></div></div></div> }
-function Attention({icon,color,title,meta,action,onClick}:{icon:React.ReactNode;color:string;title:string;meta:string;action:string;onClick:()=>void}) { return <div className="attention"><div className={`attention-icon ${color}`}>{icon}</div><div><b>{title}</b><small>{meta}</small></div><button className="tiny-button" onClick={onClick}>{action}</button></div> }
-function AccountIdentity({account}:{account:Account}) { return <span className="account-identity"><i style={{background:account.color}}>{account.initials}</i><span><b>{account.name}</b><small>{account.category}</small></span></span> }
-function Score({value}:{value:number}) { return <span className="score"><b>{value}</b><i><em style={{width:`${value}%`}}></em></i></span> }
+function ImportCenter({
+  onCommit,
+  history,
+  canImport
+}: {
+  onCommit: (s: ImportSummary) => void
+  history: ImportRecord[]
+  canImport: boolean
+}) {
+  const [summary, setSummary] = useState<ImportSummary | null>(null)
+  const [status, setStatus] = useState('Select an export file (.csv) to compute an aggregate profile.')
 
-function MetashotSegments({notify}:{notify:(m:string)=>void}) { return <><div className="page-heading compact"><div><p className="eyebrow">Customer segments</p><h1>Understand demand by market</h1><p className="subtle">Segments are aggregates—not individual customer lists.</p></div><button className="button primary" onClick={()=>notify('Segment rules saved locally (demo).')}><Check size={16}/> Save segments</button></div><div className="studio-grid"><section className="card criteria-card"><div className="card-title"><div><h2>Current segments</h2><p>Clear rules make campaigns safer and easier to measure.</p></div></div><Criterion icon={<Globe2 size={17}/>} title="India — primary installed audience" weight={87} tone="green"/><Criterion icon={<Globe2 size={17}/>} title="Pakistan — expansion research" weight={2} tone="blue"/><Criterion icon={<Globe2 size={17}/>} title="Australia — review device alignment" weight={1.5} tone="orange"/><Criterion icon={<CircleHelp size={17}/>} title="Unresolved location — improve data" weight={7.6} tone="purple"/><button className="add-criterion" onClick={()=>notify('New segment creation belongs in the secured backend workflow.')}><Plus size={16}/> Add segment rule</button></section><section className="card preview-card"><div className="card-title"><div><h2>Segment preview</h2><p>India · declared-country aggregation</p></div><span className="stage primary-market">Primary market</span></div><div className="big-score"><div className="score-ring"><strong>87%</strong><span>of records</span></div><div><h3>MetaShot’s dominant market</h3><p>202,558 records have India as declared country. This is a market-size signal, not a conversion or revenue metric.</p><button className="text-button" onClick={()=>notify('Customer-level drill-down is intentionally unavailable in the browser.')}>Why this is aggregated <ArrowRight size={14}/></button></div></div><div className="criterion-bars"><ScoreLine label="Declared-country share" value={87} result="202,558 records"/><ScoreLine label="Device-country availability" value={52} result="105,502 signals"/><ScoreLine label="Raw PII exposed" value={0} result="0 records"/></div><div className="missing-info"><CircleHelp size={16}/><span><b>Important:</b> device country is incomplete, especially in the 2024 export.</span></div></section></div></> }
-
-function ActivationLab({notify}:{notify:(m:string)=>void}) {
-  const [tab,setTab]=useState<'Funnel'|'Event contract'|'Experiments'>('Funnel')
-  const [saved,setSaved]=useState(false)
-  const steps=[['App installed','Baseline event from the app store or SDK'],['Onboarding started','First in-app setup action'],['Smart bat paired','Bluetooth connection confirmed'],['First delivery','First gameplay action'],['First match completed','Activation success milestone'],['Day-7 return','Early repeat-play signal']]
-  return <><div className="page-heading compact"><div><p className="eyebrow">Activation Lab</p><h1>Make the physical-to-digital moment measurable</h1><p className="subtle">Designed around MetaShot’s journey: app install → smart-bat pairing → first match → repeat play.</p></div><button className="button primary" onClick={()=>{setSaved(true);notify('Activation blueprint saved for implementation planning.')}}><Check size={16}/>{saved?'Blueprint saved':'Save blueprint'}</button></div><div className="lab-tabs"><button className={tab==='Funnel'?'active':''} onClick={()=>setTab('Funnel')}>Activation funnel</button><button className={tab==='Event contract'?'active':''} onClick={()=>setTab('Event contract')}>Event contract</button><button className={tab==='Experiments'?'active':''} onClick={()=>setTab('Experiments')}>Experiment notebook</button></div>{tab==='Funnel'&&<div className="activation-grid"><section className="card funnel-card"><div className="card-title"><div><h2>Activation definition</h2><p>Activation = smart bat paired + first match completed in a documented time window.</p></div><span className="stage data-incomplete">Events not connected</span></div><div className="activation-steps">{steps.map(([name,desc],i)=><div className="activation-step" key={name}><span>{i+1}</span><div><b>{name}</b><small>{desc}</small></div><em>—</em></div>)}</div><div className="missing-info"><CircleHelp size={16}/><span><b>No rate is shown yet.</b> The supplied exports only establish downloads; they do not contain app behavior, pairing, game, or retention events.</span></div></section><aside className="card activation-side"><h3>Instrument first</h3><p>Use this lab to agree on what success means before adding a dashboard.</p><div className="checklist"><CheckItem text="Use a pseudonymous app user ID"/><CheckItem text="Add an event timestamp and app version"/><CheckItem text="Record consent state and collection purpose"/><CheckItem text="Block names, emails, phones and free text from events"/><CheckItem text="Validate events in staging before release"/></div><button className="full-text" onClick={()=>notify('Recommended first implementation: smart_bat_paired and first_match_completed.')}>See recommended first events <ArrowRight size={15}/></button></aside></div>}{tab==='Event contract'&&<section className="card contract-card"><div className="card-title"><div><h2>Version 1 tracking contract</h2><p>Required fields prevent confusing or unsafe analytics later.</p></div><span className="stage primary-market">Draft v1</span></div><div className="contract-head"><span>Event</span><span>Purpose</span><span>Required properties</span><span>PII rule</span></div>{steps.map(([name],i)=><div className="contract-row" key={name}><b>{name.toLowerCase().replaceAll(' ','_')}</b><span>{['Measure acquisition baseline','Measure onboarding start','Confirm device connection','Measure first gameplay','Define activation','Measure early retention'][i]}</span><span>occurred_at · app_version · platform · consent_state</span><span className="stage data-incomplete">No direct PII</span></div>)}<div className="contract-footer"><ShieldCheck size={16}/><span>Schema owner: Product + Engineering. Validate unknown fields and reject PII before production ingestion.</span></div></section>}{tab==='Experiments'&&<div className="activation-grid"><section className="card experiment-card"><div className="card-title"><div><h2>Pairing onboarding experiment</h2><p>Example hypothesis, not an active test.</p></div><span className="stage data-incomplete">Not launched</span></div><div className="experiment-detail"><small>Hypothesis</small><p>A shorter, visual Bluetooth-pairing walkthrough improves the first-match-completed rate.</p><small>Target cohort</small><p>New installs that start onboarding and have granted analytics consent.</p><small>Primary metric</small><p>Activation rate within 24 hours. Guardrail: pairing-error rate.</p><small>Decision rule</small><p>Predefine sample size and duration; review statistical result plus qualitative masked feedback before rollout.</p></div><button className="button secondary" onClick={()=>notify('Experiment is saved as a draft. It cannot be launched without events and a controlled rollout.')}><ClipboardCheck size={16}/> Save experiment draft</button></section><aside className="card activation-side"><h3>Why this matters</h3><p>Competitors connect cohorts, feature flags, and outcomes. MetaShot should do the same—but only after the event contract is live.</p><div className="checklist"><CheckItem text="Holdout or control group defined"/><CheckItem text="Primary metric and guardrail set"/><CheckItem text="Consent-safe eligible audience"/><CheckItem text="Release/feature flag reference"/><CheckItem text="Decision recorded after test"/></div></aside></div>}</>
-}
-function CheckItem({text}:{text:string}) { return <div className="check-item"><span><Check size={12}/></span>{text}</div> }
-
-function ImportCenter({onCommit}:{onCommit:(summary:ImportSummary)=>void}) {
-  const [summary,setSummary] = useState<ImportSummary | null>(null)
-  const [status,setStatus] = useState('Choose a CSV export to create a local, aggregate-only profile.')
   const onFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    setStatus(`Reading ${file.name} in this browser…`)
+    setStatus(`Processing ${file.name} locally...`)
+
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: 'greedy',
       complete: ({ data, errors, meta }) => {
-        const rows = data.filter(row => Object.values(row).some(value => String(value ?? '').trim()))
+        const rows = data.filter(r => Object.values(r).some(v => String(v ?? '').trim()))
         const fields = meta.fields ?? []
-        const field = (pattern: RegExp) => fields.find(value => pattern.test(value.trim()))
+        const field = (p: RegExp) => fields.find(v => p.test(v.trim()))
         const emailField = field(/^e-?mail$/i) ?? field(/email/i)
         const countryField = field(/^country$/i)
         const deviceCountryField = field(/^device.?country$/i)
@@ -124,63 +675,955 @@ function ImportCenter({onCommit}:{onCommit:(summary:ImportSummary)=>void}) {
         const emailKeys = new Set<string>()
         let withCountry = 0
         let missingDeviceCountry = 0
-        rows.forEach(row => {
-          const email = emailField ? String(row[emailField] ?? '').trim().toLowerCase() : ''
+
+        rows.forEach(r => {
+          const email = emailField ? String(r[emailField] ?? '').trim().toLowerCase() : ''
           if (email) emailKeys.add(email)
-          const country = countryField ? String(row[countryField] ?? '').trim() : ''
-          if (country) { withCountry += 1; countries.set(country, (countries.get(country) ?? 0) + 1) }
-          if (!deviceCountryField || !String(row[deviceCountryField] ?? '').trim()) missingDeviceCountry += 1
+          const country = countryField ? String(r[countryField] ?? '').trim() : ''
+          if (country) {
+            withCountry += 1
+            countries.set(country, (countries.get(country) ?? 0) + 1)
+          }
+          if (!deviceCountryField || !String(r[deviceCountryField] ?? '').trim()) {
+            missingDeviceCountry += 1
+          }
         })
+
+        const validationIssues = [
+          !rows.length ? 'No valid rows detected.' : '',
+          !emailField && !field(/^(user_?id|customer_?id)$/i) ? 'Identifier column recommended (email or user_id).' : '',
+          errors.length ? `${errors.length} formatting warnings logged.` : ''
+        ].filter(Boolean)
+
         const next: ImportSummary = {
           fileName: file.name,
-          importedAt: new Date().toLocaleString(),
+          importedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           records: rows.length,
           uniqueEmails: emailKeys.size,
           countryCoverage: rows.length ? withCountry / rows.length : 0,
           missingDeviceCountry,
           malformedRows: errors.length,
-          topCountries: [...countries.entries()].sort((a,b) => b[1] - a[1]).slice(0,5).map(([name,count]) => ({name,count})),
-          piiFields: fields.filter(value => /(name|email|phone|address)/i.test(value)),
-          sourceYear: file.name.match(/20\d{2}/)?.[0] ?? 'Unspecified'
+          topCountries: [...countries.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count })),
+          piiFields: fields.filter(v => /(name|email|phone|address)/i.test(v)),
+          sourceYear: file.name.match(/20\d{2}/)?.[0] ?? '2026',
+          validationIssues
         }
         setSummary(next)
-        setStatus('Profile complete. The file and its rows were not saved by this workspace.')
+        setStatus('Profile completed in browser memory. Raw lines will not be persisted.')
         event.target.value = ''
       },
-      error: () => setStatus('The CSV could not be read. Check that it has a header row and try again.')
+      error: () => setStatus('Failed to parse CSV. Verify header row format.')
     })
   }
-  return <><div className="page-heading compact"><div><p className="eyebrow">Local import center</p><h1>Profile a CSV without exposing people</h1><p className="subtle">MetaShot Pulse reads the selected file in this browser and saves only the aggregate profile when you choose to use it.</p></div></div><div className="import-layout"><section className="card import-drop"><Database size={26}/><h2>Customer download export</h2><p>Accepts a CSV with a header row. Useful fields: email, country, deviceCountry and createdAt.</p><label className="button primary"><Plus size={16}/> Choose CSV<input aria-label="Choose CSV file" type="file" accept=".csv,text/csv" onChange={onFile}/></label><small>{status}</small><div className="privacy-note"><ShieldCheck size={16}/><span>Raw rows, emails and phone numbers are never displayed, transmitted or persisted by this front-end.</span></div></section><aside className="card import-guide"><h3>What happens next</h3><CheckItem text="Count records and normalized email keys"/><CheckItem text="Assess country and device-country completeness"/><CheckItem text="Flag columns that may contain personal data"/><CheckItem text="Save only the resulting aggregate summary"/><p>For production, route files through authenticated storage, access controls, audit logs and a retention policy.</p></aside></div>{summary && <section className="card import-result"><div className="card-title"><div><h2>Ready to use: {summary.fileName}</h2><p>Local profile created {summary.importedAt} · source year: {summary.sourceYear}</p></div><button className="button primary" onClick={()=>onCommit(summary)}><Check size={16}/> Use aggregate profile</button></div><div className="metric-grid import-metrics"><Metric label="Rows profiled" value={summary.records.toLocaleString()} delta="Non-empty CSV rows" icon={<Users size={18}/>} color="mint"/><Metric label="Unique email keys" value={summary.uniqueEmails.toLocaleString()} delta="Normalized locally" icon={<Target size={18}/>} color="blue"/><Metric label="Country coverage" value={formatPercent(summary.countryCoverage)} delta="Declared country present" icon={<Globe2 size={18}/>} color="violet"/><Metric label="Device country missing" value={summary.missingDeviceCountry.toLocaleString()} delta={`${summary.malformedRows} parse warnings`} icon={<Sparkles size={18}/>} color="amber"/></div><div className="import-columns"><div><b>Potential PII columns detected</b><p>{summary.piiFields.length ? summary.piiFields.join(' · ') : 'None detected from column names'}</p></div><div><b>Top declared countries</b><p>{summary.topCountries.length ? summary.topCountries.map(item=>`${item.name} (${item.count.toLocaleString()})`).join(' · ') : 'No country field or no populated values'}</p></div></div></section>}</>
+
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Data Ingestion · Local Compute</span>
+          <h1 className="page-title">CSV Import Engine</h1>
+          <p className="page-subtitle">
+            Ingest local application logs and customer registration dumps. Zero rows leave your browser session.
+          </p>
+        </div>
+      </div>
+
+      <div className="import-layout">
+        <div className="shadcn-card dropzone">
+          <Database size={32} />
+          <div>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>Drop Export CSV Here</h2>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+              Supports application snapshots with email, country, and deviceCountry headers.
+            </p>
+          </div>
+          {canImport ? (
+            <label className="btn btn-primary" style={{ position: 'relative' }}>
+              <Plus size={15} />
+              <span>Browse Local File</span>
+              <input type="file" accept=".csv,text/csv" onChange={onFile} />
+            </label>
+          ) : (
+            <span className="badge badge-outline">Viewer Role: Upload Disabled</span>
+          )}
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{status}</span>
+        </div>
+
+        <aside className="shadcn-card">
+          <h3 className="card-title">Compliance Ingestion Bar</h3>
+          <p className="card-desc">Production pipelines enforce four automatic safeguards:</p>
+          <div className="checklist">
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Header inspection confirms valid schema keys.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Normalized email keys stripped of leading/trailing whitespace.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Strict aggregate rollup: zero customer names retained.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>All validation warnings saved to immutable audit history.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {summary && (
+        <section className="shadcn-card" style={{ marginTop: '1.5rem' }}>
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Parsed Summary: {summary.fileName}</h2>
+              <p className="card-desc">{summary.records.toLocaleString()} rows analyzed · Source year {summary.sourceYear}</p>
+            </div>
+            {canImport && (
+              <button className="btn btn-primary" onClick={() => onCommit(summary)}>
+                <Check size={15} />
+                <span>Save to Workspace Audit</span>
+              </button>
+            )}
+          </div>
+
+          <div className="metrics-grid" style={{ marginBottom: '1.25rem' }}>
+            <div className="metric-card">
+              <span className="metric-label">Parsed Rows</span>
+              <div className="metric-value">{summary.records.toLocaleString()}</div>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Unique Keys</span>
+              <div className="metric-value">{summary.uniqueEmails.toLocaleString()}</div>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Country Coverage</span>
+              <div className="metric-value">{formatPercent(summary.countryCoverage)}</div>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Missing Device Country</span>
+              <div className="metric-value">{summary.missingDeviceCountry.toLocaleString()}</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* AUDIT LOG TABLE */}
+      <section className="shadcn-card" style={{ marginTop: '1.5rem' }}>
+        <div className="card-header">
+          <div>
+            <h2 className="card-title">Workspace Audit History</h2>
+            <p className="card-desc">Permanent record of imports processed during this session</p>
+          </div>
+          <span className="badge badge-outline">{history.length} records</span>
+        </div>
+
+        <div className="table-wrapper">
+          <table className="shadcn-table">
+            <thead>
+              <tr>
+                <th>Source Export</th>
+                <th>Records</th>
+                <th>Duplicates</th>
+                <th>Actor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((h, i) => (
+                <tr key={i}>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{h.fileName}</div>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{h.importedAt}</div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{h.records.toLocaleString()}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{h.duplicates.toLocaleString()}</td>
+                  <td>{h.actor}</td>
+                  <td>
+                    <span className="badge badge-solid">{h.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  )
 }
 
-function GovernanceCenter({ready,setReady,notify}:{ready:boolean;setReady:(value:boolean)=>void;notify:(message:string)=>void}) {
-  const [retention,setRetention] = useState('90 days')
-  return <><div className="page-heading compact"><div><p className="eyebrow">Workspace safeguards</p><h1>Set the rules before data moves</h1><p className="subtle">These controls document the minimum bar for a production import and activation workflow.</p></div><button className="button primary" onClick={()=>{setReady(!ready);notify(ready ? 'Governance review reopened.' : 'Governance checklist marked ready for backend implementation.')}}><Check size={16}/>{ready ? 'Review again' : 'Mark ready'}</button></div><div className="governance-grid"><section className="card governance-card"><div className="card-title"><div><h2>Data handling checklist</h2><p>Do not replace legal, security or privacy review with this UI.</p></div><span className={ready ? 'stage primary-market' : 'stage data-incomplete'}>{ready ? 'Ready to build' : 'Needs review'}</span></div><div className="checklist"><CheckItem text="Customer data is processed only for a documented purpose"/><CheckItem text="Consent or another lawful basis is verified before messaging"/><CheckItem text="Role-based access and an audit trail are required"/><CheckItem text="Raw data has a documented retention and deletion process"/><CheckItem text="Product events reject direct PII and free-text fields"/></div></section><section className="card governance-card"><h2>Retention & connections</h2><p>Configuration here is planning-only; it does not connect or send data to any vendor.</p><label className="control-label">Aggregate-profile retention<select value={retention} onChange={e=>setRetention(e.target.value)}><option>30 days</option><option>90 days</option><option>1 year</option></select></label><div className="connection-row"><div><b>Product events SDK</b><small>Needed for pairing and activation measurement</small></div><span className="stage data-incomplete">Not connected</span></div><div className="connection-row"><div><b>Secure import backend</b><small>Needed before real customer-file storage</small></div><span className="stage data-incomplete">Not configured</span></div><div className="connection-row"><div><b>Messaging provider</b><small>Requires consent and deliverability review</small></div><span className="stage data-incomplete">Disabled</span></div><button className="button secondary" onClick={()=>notify(`Retention policy draft set to ${retention}.`)}><FileText size={16}/> Save policy draft</button></section></div></>
+/* ==========================================================================
+   VIEW 3: CUSTOMERS & MARKETS TABLE + DETAIL DRAWER
+   ========================================================================== */
+
+function AccountsView({
+  accounts,
+  query,
+  setQuery,
+  selected,
+  setSelected,
+  showPanel,
+  setShowPanel,
+  notify,
+  onOpenBooking
+}: {
+  accounts: Account[]
+  query: string
+  setQuery: (v: string) => void
+  selected: Account
+  setSelected: (v: Account) => void
+  showPanel: boolean
+  setShowPanel: (v: boolean) => void
+  notify: (m: string) => void
+  onOpenBooking: () => void
+}) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Customer Geography</span>
+          <h1 className="page-title">
+            Market Directory <span className="badge badge-outline">{accounts.length} Segments</span>
+          </h1>
+          <p className="page-subtitle">
+            Declared customer markets synthesized from MetaShot registration logs without exposing personal data.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={onOpenBooking}>
+            <Calendar size={15} />
+            <span>Schedule Review</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <div className="search-input-wrap">
+          <Search size={15} className="search-icon" />
+          <input
+            className="search-input"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search markets, countries or status..."
+          />
+          <span className="kbd-shortcut">⌘K</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-outline" onClick={() => notify('Filters applied: Active segments')}>
+            <Filter size={14} />
+            <span>Filter Active</span>
+          </button>
+          <button className="btn btn-outline" onClick={() => setShowPanel(!showPanel)}>
+            <SlidersHorizontal size={14} />
+            <span>{showPanel ? 'Hide Inspector' : 'Show Inspector'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: showPanel ? '1.4fr 1fr' : '1fr', gap: '1.25rem', alignItems: 'start' }}>
+        <div className="table-wrapper">
+          <table className="shadcn-table">
+            <thead>
+              <tr>
+                <th>Market Segment</th>
+                <th>Share</th>
+                <th>Confidence</th>
+                <th>Stage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map(a => (
+                <tr
+                  key={a.id}
+                  className={selected.id === a.id ? 'selected' : ''}
+                  onClick={() => { setSelected(a); setShowPanel(true) }}
+                >
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className="market-avatar">{a.initials}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{a.place}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{a.fit}%</td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{formatPercent(a.confidence)}</td>
+                  <td>
+                    <span className="badge badge-outline">{a.stage}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {showPanel && (
+          <aside className="detail-drawer">
+            <div className="drawer-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span className="market-avatar" style={{ width: '36px', height: '36px', fontSize: '0.875rem' }}>
+                  {selected.initials}
+                </span>
+                <div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>{selected.name}</h3>
+                  <span className="badge badge-solid">{selected.stage}</span>
+                </div>
+              </div>
+              <button className="icon-btn" onClick={() => setShowPanel(false)}>
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="meta-stats-grid">
+              <div className="meta-stat-item">
+                <span className="meta-stat-label">Market Share</span>
+                <span className="meta-stat-val">{selected.fit}%</span>
+              </div>
+              <div className="meta-stat-item">
+                <span className="meta-stat-label">Coverage Quality</span>
+                <span className="meta-stat-val">{formatPercent(selected.confidence)}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '0.8125rem' }}>
+              <div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Total Download Records:</span>
+                <div style={{ fontWeight: 600 }}>{selected.place}</div>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Device Location Signals:</span>
+                <div style={{ fontWeight: 600 }}>{selected.coverage}</div>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Export Chronology:</span>
+                <div style={{ fontWeight: 600 }}>{selected.freshness}</div>
+              </div>
+            </div>
+
+            {selected.signal && (
+              <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', fontSize: '0.75rem' }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>Signal Note:</div>
+                <div style={{ color: 'var(--text-secondary)' }}>{selected.signal}</div>
+              </div>
+            )}
+
+            <div style={{ marginTop: '0.5rem' }}>
+              {/* THE SIGNATURE BUTTON WITH HOVER TRANSITION IN DRAWER */}
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl text-sm font-bold tracking-[-0.011em] bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.15)] h-12 px-6 py-2.5 w-full transition-all cursor-pointer chroma-text-animate-parent"
+                onClick={() => {
+                  onOpenBooking()
+                  notify(`${selected.name} staged for briefing.`)
+                }}
+              >
+                <span className="chroma-text-out chroma-text-out-animate" data-text={`Book Briefing for ${selected.name}`}>
+                  Book Briefing for {selected.name}
+                </span>
+                <span className="text-sm tabler-icon-arrow-right transition-transform">→</span>
+              </button>
+            </div>
+          </aside>
+        )}
+      </div>
+    </>
+  )
 }
 
-function MetashotQuality({notify}:{notify:(m:string)=>void}) { const [approved,setApproved]=useState(false); return <><div className="page-heading compact"><div><p className="eyebrow">Data quality</p><h1>Make the customer data trustworthy</h1><p className="subtle">The browser contains only aggregates; raw customer data stays local and access-controlled.</p></div><div className="head-actions"><button className="button secondary" onClick={()=>notify('A secure backend import is the next implementation step.')}><Sparkles size={16}/> Plan refresh</button><button className="button primary" onClick={()=>{setApproved(!approved);notify(approved?'Quality review reopened.':'Quality review marked complete.')}}><Check size={16}/>{approved?'Reviewed':'Mark reviewed'}</button></div></div><div className="research-layout"><section className="card findings"><div className="finding-summary"><div className="summary-orb"><ShieldCheck size={22}/></div><div><h2>Export-quality review</h2><p>Facts derived from the three provided CSV files. No individual records are displayed.</p></div><span>3 exports</span></div><Finding title="Declared country coverage" text="215,255 of 232,970 records have a declared country (92.4%)." tags={['CSV profile','Aggregate']} status="supported"/><Finding title="Email deduplication candidates" text="10,860 normalized email keys repeat across exports. This requires backend review; it does not prove duplicate people." tags={['Cross-export','Review']} status="supported"/><Finding title="Device-country field" text="113,829 records have no device country, including all 2024 rows. Do not use device geography as a complete coverage measure." tags={['Missing data','Caveat']} status="unknown"/><Finding title="2026 comparison caveat" text="The 2026 export ends on 9 September, so it cannot be used as a full-year comparison." tags={['Date span','Caveat']} status="supported"/></section><aside className="research-aside"><section className="card evidence-health"><h3>Field completeness</h3><div className="health-row"><span>Declared country</span><b>92.4%</b></div><div className="line-track"><em style={{width:'92.4%'}}></em></div><div className="health-row"><span>Email present</span><b>97.2%</b></div><div className="health-row"><span>Phone present</span><b>83.3%</b></div></section><section className="card source-list"><div className="card-title"><h3>Data sources</h3><button className="text-button" onClick={()=>notify('See data/metashot_customer_data_profile.md for the aggregate profile.')}>Open profile</button></div>{['2024.csv · full year','2025.csv · full year','2026.csv · through Sep 9'].map(s=><div className="source" key={s}><div className="source-icon"><FileText size={15}/></div><div><b>{s}</b><small>Local user-provided export</small></div><Check size={15}/></div>)}</section></aside></div></> }
+/* ==========================================================================
+   VIEW 4: SEGMENTS
+   ========================================================================== */
 
-function MetashotCampaigns({approved,setApproved,notify}:{approved:boolean;setApproved:(v:boolean)=>void;notify:(m:string)=>void}) { return <><div className="page-heading compact"><div><p className="eyebrow">Campaign workspace</p><h1>Plan before you activate</h1><p className="subtle">No customer message can be sent from this application.</p></div><span className="simulation-badge"><ShieldCheck size={15}/> Planning only</span></div><div className="outreach-grid"><section className="card composer"><div className="composer-top"><div><span className="stage primary-market">Segment brief</span><h2>India app-download cohort</h2></div></div><div className="field"><small>Audience</small><div><span className="contact-placeholder">Aggregated market segment — no contacts loaded</span></div></div><div className="field"><small>Objective</small><input value="Understand activation and device-pairing needs" readOnly/></div><div className="email-body">Suggested next step:<br/><br/>Connect privacy-safe product events and purchase/support data to understand the journey from app download to bat connection and repeat play.<br/><br/>Do not infer contact consent from an app download. Any activation requires a separate consent, compliance, and deliverability review.</div><div className="composer-footer"><span>Planning note · no recipient data</span><div><button className="button secondary" onClick={()=>notify('Campaign brief saved locally.')}>Save brief</button><button className="button primary" onClick={()=>{setApproved(true);notify('Brief approved for internal planning only.')}}><Check size={16}/>{approved?'Approved':'Approve brief'}</button></div></div></section><aside className="card grounding"><div className="card-title"><div><h2>Safety check</h2><p>Campaign prerequisites</p></div><span className="grounded"><Check size={14}/> 3/3</span></div><div className="grounding-score"><div className="score-ring small"><strong>100</strong><span>safe</span></div><p>This workspace uses aggregate segments only. It has no sending provider and no raw contact data.</p></div><div className="claim"><span>“Consent review”</span><div><ShieldCheck size={14}/><b>Required before activation</b><small>Not derived from app download</small></div></div><div className="claim"><span>“Simulation only”</span><div><ShieldCheck size={14}/><b>Real sending disabled</b><small>Product safeguard</small></div></div></aside></div></> }
+function MetashotSegments({ notify }: { notify: (m: string) => void }) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Audience Segmentation</span>
+          <h1 className="page-title">Market Demand Clusters</h1>
+          <p className="page-subtitle">Deterministic cohorts based strictly on verified export geographic signals.</p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => notify('Segment rules locked to session.')}>
+            <Check size={15} />
+            <span>Save Rules</span>
+          </button>
+        </div>
+      </div>
 
-function MetashotJourneys() { const cols=[['Downloaded app',[accounts[0],accounts[1]]],['Needs data',[accounts[5],accounts[2]]],['Opportunity to learn',[accounts[3],accounts[4]]]]; return <><div className="page-heading compact"><div><p className="eyebrow">Customer journey</p><h1>What we know—and what we don’t</h1><p className="subtle">These are data states, not assumptions about customer behaviour.</p></div></div><div className="pipeline-stats"><span><b>232,970</b> download records</span><span><b>0</b> purchase events connected</span><span><b>0</b> real messages sent</span></div><div className="kanban">{cols.map(([name,items])=><section key={name as string} className="kanban-col"><div className="kanban-head"><div><i></i><b>{name as string}</b><span>{(items as Account[]).length}</span></div></div>{(items as Account[]).map(a=><article key={a.id} className="pipeline-card"><AccountIdentity account={a}/><p>{a.place}</p><div><Score value={a.fit}/><span><ShieldCheck size={13}/>aggregate</span></div></article>)}</section>)}</div></> }
+      <div className="studio-grid">
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Active Market Rules</h2>
+              <p className="card-desc">Weighted customer clusters by declared country presence</p>
+            </div>
+          </div>
 
-function MetashotInsights() { return <><div className="page-heading compact"><div><p className="eyebrow">Customer insights</p><h1>Download trends, responsibly read</h1><p className="subtle">Counts measure application-download records, not purchases, retention, or revenue.</p></div></div><div className="eval-grid"><Metric label="2024 downloads" value="37,649" delta="Full export year" icon={<BarChart3 size={18}/>} color="mint"/><Metric label="2025 downloads" value="99,802" delta="Full export year" icon={<BarChart3 size={18}/>} color="blue"/><Metric label="2026 downloads" value="95,519" delta="Through Sep 9 only" icon={<BarChart3 size={18}/>} color="violet"/></div><section className="card eval-table"><div className="card-title"><div><h2>Insight definitions</h2><p>Make sure the whole team reads these metrics the same way.</p></div></div><div className="table-row table-head"><span>Metric</span><span>Definition</span><span>Limitation</span><span>Status</span></div>{[['Download records','Rows in the supplied application export','Not unique people','Available'],['Unique email keys','Normalized non-empty emails across exports','Not verified identities','Available'],['Market share','Declared-country rows / all rows','Country can be absent or stale','Available'],['Activation rate','App download → connected bat or first play','Event data not provided','Not available']].map(r=><div className="table-row" key={r[0]}><b>{r[0]}</b><span>{r[1]}</span><span>{r[2]}</span><span className="stage primary-market">{r[3]}</span></div>)}</section></> }
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div style={{ padding: '0.875rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>India · Dominant Market</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>202,558 records (87.0%)</div>
+              </div>
+              <span className="badge badge-solid">Primary Cohort</span>
+            </div>
 
-function AccountsView({accounts,query,setQuery,selected,setSelected,showPanel,setShowPanel,notify}:{accounts:Account[];query:string;setQuery:(v:string)=>void;selected:Account;setSelected:(v:Account)=>void;showPanel:boolean;setShowPanel:(v:boolean)=>void;notify:(m:string)=>void}) {
- return <><div className="page-heading compact"><div><p className="eyebrow">Customer intelligence</p><h1>Customer markets <span className="count-pill">6</span></h1><p className="subtle">Privacy-safe geography segments derived from application-download exports.</p></div><button className="button primary" onClick={() => notify('Use Imports to profile an additional CSV locally; production storage needs a secured backend.')}><Plus size={16}/> Import update</button></div><div className={showPanel?'account-layout':'account-layout full'}><section className="card accounts-table"><div className="table-toolbar"><div className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search markets or data segments"/></div><button className="filter-button"><Filter size={15}/> Filters <span>2</span></button><button className="icon-button"><SlidersHorizontal size={17}/></button></div><div className="account-head"><span>Segment</span><span>Share</span><span>Coverage</span><span>Status</span><span></span></div>{accounts.map(a=><button className={selected.id===a.id?'account-row selected':'account-row'} key={a.id} onClick={()=>{setSelected(a);setShowPanel(true)}}><AccountIdentity account={a}/><Score value={a.fit}/><span className="confidence"><b>{formatPercent(a.confidence)}</b><small>location quality</small></span><span className={stageClass(a.stage)}>{a.stage}</span><MoreHorizontal size={17}/></button>)}</section>{showPanel && <AccountDetail account={selected} onClose={()=>setShowPanel(false)} notify={notify}/>}</div></>
+            <div style={{ padding: '0.875rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Pakistan · Expansion Cluster</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>4,518 records (1.9%)</div>
+              </div>
+              <span className="badge badge-outline">Expansion</span>
+            </div>
+
+            <div style={{ padding: '0.875rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Unresolved Location Cohort</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>17,715 records (7.6%)</div>
+              </div>
+              <span className="badge badge-outline">Data Incomplete</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Cluster Dominance Meter</h2>
+              <p className="card-desc">India account footprint vs remaining territory</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', margin: '1rem 0' }}>
+            <div className="score-ring-mono">
+              <div className="score-ring-mono-content">
+                <div className="score-ring-val">87%</div>
+                <div className="score-ring-label">of base</div>
+              </div>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Concentrated Opportunity</h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                MetaShot’s hardware and app experience is overwhelmingly consumed in South Asia. Focus engagement resources here first.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
+  )
 }
-function AccountDetail({account,onClose,notify}:{account:Account;onClose:()=>void;notify:(m:string)=>void}) { return <aside className="card detail-panel"><button className="close-detail" onClick={onClose}><X size={18}/></button><div className="detail-identity"><i style={{background:account.color}}>{account.initials}</i><div><h2>{account.name}</h2><span className={stageClass(account.stage)}>{account.stage}</span></div></div><p className="detail-description">Aggregated market segment. This view never exposes raw customer names, emails, or phone numbers.</p><div className="detail-score"><div><small>Declared-market share</small><strong>{account.fit}<sup>%</sup></strong></div><div><small>Location coverage</small><strong>{formatPercent(account.confidence)}</strong></div></div><div className="info-list"><Info label="Segment type" value={account.category}/><Info label="Records" value={account.place}/><Info label="Device signal" value={account.coverage}/><Info label="Export coverage" value={account.freshness}/></div>{account.signal&&<div className="signal"><Zap size={15}/><div><b>Customer signal</b><span>{account.signal}</span></div></div>}<div className="detail-actions"><button className="button primary" onClick={()=>notify(`${account.name} added to a privacy-safe market review.`)}><ClipboardCheck size={16}/> Review market</button><button className="button secondary" onClick={()=>notify('Data refresh should be run through the secured import pipeline.')}><Sparkles size={16}/> Refresh</button></div><div className="provenance"><span><ShieldCheck size={15}/> Aggregate source</span><button onClick={()=>notify(`${account.evidence} aggregate fields are documented in the data profile.`)}>View profile <ArrowRight size={13}/></button></div></aside> }
-function Info({label,value}:{label:string;value:string}) { return <div><small>{label}</small><span>{value}</span></div> }
 
-function IcpView({notify}:{notify:(m:string)=>void}) { const [weight,setWeight]=useState(25); return <><div className="page-heading compact"><div><p className="eyebrow">ICP Studio</p><h1>Consumer electronics distributors</h1><p className="subtle">Version 3 · Last edited today by Om Javia</p></div><button className="button primary" onClick={()=>notify('ICP version saved. Scores will recalculate in the background.')}><Check size={16}/> Save changes</button></div><div className="studio-grid"><section className="card criteria-card"><div className="card-title"><div><h2>Scoring criteria</h2><p>Unknown information never counts against an account.</p></div><button className="icon-button"><MoreHorizontal size={18}/></button></div><Criterion icon={<Layers3 size={17}/>} title="Product-category compatibility" weight={weight} setWeight={setWeight} tone="green"/><Criterion icon={<Globe2 size={17}/>} title="Geographic coverage" weight={20} tone="blue"/><Criterion icon={<Zap size={17}/>} title="Distribution capabilities" weight={20} tone="orange"/><Criterion icon={<Users size={17}/>} title="Brand & retail compatibility" weight={15} tone="purple"/><Criterion icon={<BarChart3 size={17}/>} title="Commercial scale" weight={10} tone="gray"/><Criterion icon={<Sparkles size={17}/>} title="Timing signals" weight={10} tone="mint"/><button className="add-criterion"><Plus size={16}/> Add a criterion</button></section><section className="card preview-card"><div className="card-title"><div><h2>Live score preview</h2><p>How the current rubric evaluates Petra Industries</p></div><span className="stage qualified">Qualified</span></div><div className="big-score"><div className="score-ring"><strong>88</strong><span>fit score</span></div><div><h3>High-priority partner</h3><p>Strong category and US coverage match. No conflict found in 12 reviewed sources.</p><button className="text-button" onClick={()=>notify('Opened 12 evidence sources for Petra Industries.')}>See supporting evidence <ArrowRight size={14}/></button></div></div><div className="criterion-bars"><ScoreLine label="Category compatibility" value={100} result="25 / 25"/><ScoreLine label="Geographic coverage" value={90} result="18 / 20"/><ScoreLine label="Distribution capability" value={85} result="17 / 20"/><ScoreLine label="Brand compatibility" value={80} result="12 / 15"/></div><div className="missing-info"><CircleHelp size={16}/><span><b>Known gap:</b> Commercial scale needs a reviewer check. It does not reduce fit.</span></div></section></div></> }
-function Criterion({icon,title,weight,setWeight,tone}:{icon:React.ReactNode;title:string;weight:number;setWeight?:(v:number)=>void;tone:string}) { return <div className="criterion"><div className={`criterion-icon ${tone}`}>{icon}</div><div className="criterion-name"><b>{title}</b><small>Evidence-backed</small></div><div className="weight"><input aria-label={title} type="number" value={weight} min="0" max="100" onChange={e=>setWeight?.(Number(e.target.value))}/><span>%</span></div><MoreHorizontal size={17}/></div> }
-function ScoreLine({label,value,result}:{label:string;value:number;result:string}) { return <div className="score-line"><div><span>{label}</span><b>{result}</b></div><i><em style={{width:`${value}%`}}></em></i></div> }
+/* ==========================================================================
+   VIEW 5: ACTIVATION LAB
+   ========================================================================== */
 
-function ResearchView({selected,notify}:{selected:Account;notify:(m:string)=>void}) { const [approved,setApproved]=useState(false); return <><div className="page-heading compact"><div><p className="eyebrow">Research workbench</p><h1>{selected.name}</h1><p className="subtle">12 findings · 11 supported · last run 24 minutes ago</p></div><div className="head-actions"><button className="button secondary" onClick={()=>notify('Research job is queued with current evidence snapshot.')}><Sparkles size={16}/> Run refresh</button><button className="button primary" onClick={()=>{setApproved(!approved);notify(approved?'Findings moved back to review.':'Research findings approved.')}}><Check size={16}/>{approved?'Approved':'Approve findings'}</button></div></div><div className="research-layout"><section className="card findings"><div className="finding-summary"><div className="summary-orb"><ShieldCheck size={22}/></div><div><h2>Evidence-backed profile</h2><p>AI extracted these claims from approved public sources. Review before using in outreach.</p></div><span>{formatPercent(selected.confidence)} confidence</span></div><Finding title="Product focus" text="Public catalog and company pages indicate a consumer-electronics distribution focus." tags={['Category page','Company site']} status="supported"/><Finding title="Distribution capability" text="The company describes reseller and retail-channel distribution capabilities across the United States." tags={['About page','Services page']} status="supported"/><Finding title="Geographic footprint" text="US coverage is supported by public location and distribution information." tags={['Locations page']} status="supported"/><Finding title="Brand portfolio" text="No complete, current line card was found in this research run." tags={['Missing evidence']} status="unknown"/></section><aside className="research-aside"><section className="card evidence-health"><h3>Research health</h3><div className="health-row"><span>Evidence coverage</span><b>92%</b></div><div className="line-track"><em style={{width:'92%'}}></em></div><div className="health-row"><span>Freshness</span><b>Today</b></div><div className="health-row"><span>Source quality</span><b>High</b></div></section><section className="card source-list"><div className="card-title"><h3>Source ledger</h3><button className="text-button" onClick={()=>notify('All source URLs are retained with the account record.')}>View all</button></div>{['Company overview','Product categories','Regional coverage'].map((s,i)=><div className="source" key={s}><div className="source-icon"><Globe2 size={15}/></div><div><b>{s}</b><small>Official website · {i===2?'7':'18'} min ago</small></div><Check size={15}/></div>)}</section></aside></div></> }
-function Finding({title,text,tags,status}:{title:string;text:string;tags:string[];status:string}) { return <article className="finding"><div className={`finding-status ${status}`}>{status==='supported'?<Check size={15}/>:<CircleHelp size={15}/>}</div><div><div className="finding-title"><h3>{title}</h3><span>{status==='supported'?'Supported':'Needs research'}</span></div><p>{text}</p><div className="source-tags">{tags.map(t=><span key={t}>{t}</span>)}</div></div><button className="icon-button"><MoreHorizontal size={17}/></button></article> }
+function ActivationLab({ notify }: { notify: (m: string) => void }) {
+  const [tab, setTab] = useState<'Funnel' | 'Contract' | 'Experiments'>('Funnel')
+  const steps = [
+    ['App Installed', 'Baseline app store registration record'],
+    ['Onboarding Started', 'First in-app user account profile setup'],
+    ['Smart Bat Paired', 'Bluetooth telemetry handshake established'],
+    ['First Delivery Faced', 'First live swing or ball tracking event'],
+    ['First Match Completed', 'Primary activation milestone achieved'],
+    ['Day-7 Return', 'Repeat gameplay retention indicator']
+  ]
 
-function OutreachView({selected,approved,setApproved,notify}:{selected:Account;approved:boolean;setApproved:(v:boolean)=>void;notify:(m:string)=>void}) { const [edited,setEdited]=useState(false); return <><div className="page-heading compact"><div><p className="eyebrow">Outreach studio</p><h1>Draft with confidence</h1><p className="subtle">Every factual line is linked to evidence. Delivery is simulation-only.</p></div><span className="simulation-badge"><ShieldCheck size={15}/> Simulation mode</span></div><div className="outreach-grid"><section className="card composer"><div className="composer-top"><div><span className="stage outreach-drafted">First touch</span><h2>Partnership introduction</h2></div><button className="icon-button"><MoreHorizontal size={18}/></button></div><div className="field"><small>To</small><div><span className="contact-placeholder">No contact selected</span><button onClick={()=>notify('Contact discovery remains intentionally disabled until a permitted source is connected.')}>Select contact</button></div></div><div className="field"><small>Subject</small><input value="A channel fit worth exploring" onChange={()=>setEdited(true)}/></div><div className="email-body" contentEditable suppressContentEditableWarning onInput={()=>setEdited(true)}>Hi there,<br/><br/>I noticed <mark>{selected.name}</mark> has a documented footprint in <mark>{selected.category.toLowerCase()}</mark> and broad US distribution coverage.<br/><br/>We’re looking for a selective partner for a new product line and thought there may be a strong category fit. Would a short introduction be useful?<br/><br/>Best,<br/>Om</div><div className="composer-footer"><span>{edited?'Unsaved edits':'Draft generated from approved evidence'}</span><div><button className="button secondary" onClick={()=>notify('Draft saved locally for review.')}>Save draft</button><button className="button primary" onClick={()=>{setApproved(true);notify('Draft approved. It remains in simulation mode.')}}><Check size={16}/>{approved?'Approved':'Approve draft'}</button></div></div></section><aside className="card grounding"><div className="card-title"><div><h2>Grounding check</h2><p>Claims used in this draft</p></div><span className="grounded"><Check size={14}/> 2/2</span></div><div className="grounding-score"><div className="score-ring small"><strong>100</strong><span>supported</span></div><p>No unsupported factual statements detected. Sending is unavailable until a workspace passes compliance review.</p></div><div className="claim"><span>“{selected.category}”</span><div><ShieldCheck size={14}/><b>Product focus</b><small>Official category page</small></div></div><div className="claim"><span>“US distribution coverage”</span><div><ShieldCheck size={14}/><b>Geographic footprint</b><small>Official locations page</small></div></div><button className="full-text" onClick={()=>notify('Opening evidence-ledger view (demo).')}>Open evidence ledger <ArrowRight size={15}/></button></aside></div></> }
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Product Telemetry Blueprint</span>
+          <h1 className="page-title">Activation Lab</h1>
+          <p className="page-subtitle">
+            Bridge physical cricket hardware with digital app telemetry: Bat pairing → Match completion.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => notify('Activation blueprint saved to product roadmap.')}>
+            <Check size={15} />
+            <span>Save Blueprint</span>
+          </button>
+        </div>
+      </div>
 
-function PipelineView({notify}:{notify:(m:string)=>void}) { const cols = [{name:'Qualified',items:accounts.slice(0,2)},{name:'Draft ready',items:accounts.slice(2,4)},{name:'Contacted',items:accounts.slice(4,6)}]; return <><div className="page-heading compact"><div><p className="eyebrow">Pipeline</p><h1>Move only with context</h1><p className="subtle">Stages record every change and preserve the decision history.</p></div><button className="button secondary" onClick={()=>notify('Pipeline report exported (demo).')}><FileText size={16}/> Export report</button></div><div className="pipeline-stats"><span><b>34</b> qualified</span><span><b>18</b> drafts ready</span><span><b>6</b> active conversations</span></div><div className="kanban">{cols.map(c=><section key={c.name} className="kanban-col"><div className="kanban-head"><div><i></i><b>{c.name}</b><span>{c.items.length}</span></div><button><Plus size={15}/></button></div>{c.items.map(a=><article key={a.id} className="pipeline-card"><AccountIdentity account={a}/><p>{a.category} · {a.coverage}</p><div><Score value={a.fit}/><span><ShieldCheck size={13}/>{a.evidence}</span></div>{a.signal&&<small className="pipeline-signal"><Zap size={12}/>{a.signal}</small>}</article>)}</section>)}</div></> }
+      <div className="shadcn-tabs">
+        <button className={`shadcn-tab-btn ${tab === 'Funnel' ? 'active' : ''}`} onClick={() => setTab('Funnel')}>
+          Funnel Architecture
+        </button>
+        <button className={`shadcn-tab-btn ${tab === 'Contract' ? 'active' : ''}`} onClick={() => setTab('Contract')}>
+          Event Contract Schema
+        </button>
+        <button className={`shadcn-tab-btn ${tab === 'Experiments' ? 'active' : ''}`} onClick={() => setTab('Experiments')}>
+          Pairing Experiments
+        </button>
+      </div>
 
-function EvaluationView() { return <><div className="page-heading compact"><div><p className="eyebrow">Evaluation lab</p><h1>Trust is measurable</h1><p className="subtle">Model results are separated from commercial performance.</p></div><button className="button primary"><Plus size={16}/> New evaluation</button></div><div className="eval-grid"><Metric label="Qualification F1" value="0.87" delta="50 adjudicated accounts" icon={<Target size={18}/>} color="mint"/><Metric label="Evidence coverage" value="96.4%" delta="142 reviewed claims" icon={<ShieldCheck size={18}/>} color="blue"/><Metric label="Draft acceptance" value="82%" delta="28 human reviews" icon={<ClipboardCheck size={18}/>} color="violet"/></div><section className="card eval-table"><div className="card-title"><div><h2>Recent evaluation runs</h2><p>Immutable dataset and prompt snapshots</p></div><button className="text-button">Evaluation guide <ArrowRight size={14}/></button></div><div className="table-row table-head"><span>Run</span><span>Model</span><span>Dataset</span><span>Result</span></div>{[['ICP qualification · v3','research-model-1','Golden set · 50','F1 0.87'],['Research groundedness · v2','research-model-1','Claims · 142','96.4%'],['Outreach factuality · v1','draft-model-1','Drafts · 28','100%']].map(r=><div className="table-row" key={r[0]}><b>{r[0]}</b><span>{r[1]}</span><span>{r[2]}</span><span className="stage qualified">{r[3]}</span></div>)}</section></> }
+      {tab === 'Funnel' && (
+        <div className="activation-grid">
+          <section className="shadcn-card">
+            <div className="card-header">
+              <div>
+                <h2 className="card-title">Hardware-to-Software Progression</h2>
+                <p className="card-desc">Six sequential milestones defining customer success</p>
+              </div>
+              <span className="badge badge-outline">Specification</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {steps.map(([title, desc], i) => (
+                <div className="step-item" key={title}>
+                  <div className="step-number">{i + 1}</div>
+                  <div className="step-details">
+                    <div className="step-title">{title}</div>
+                    <div className="step-desc">{desc}</div>
+                  </div>
+                  <span className="badge badge-outline">Ready</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <aside className="shadcn-card">
+            <h3 className="card-title">Instrumentation Guardrails</h3>
+            <div className="checklist">
+              <div className="check-item">
+                <span className="check-icon-wrap"><Check size={12} /></span>
+                <span>Use pseudonymous UUIDs only—never raw phone/email in payloads.</span>
+              </div>
+              <div className="check-item">
+                <span className="check-icon-wrap"><Check size={12} /></span>
+                <span>Include hardware firmware version on pairing handshake.</span>
+              </div>
+              <div className="check-item">
+                <span className="check-icon-wrap"><Check size={12} /></span>
+                <span>Enforce ISO 8601 UTC timestamps on every bat swing event.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {tab === 'Contract' && (
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Telemetry Contract Schema (v1.2)</h2>
+              <p className="card-desc">Standard payload definitions for mobile SDK integration</p>
+            </div>
+            <button className="btn btn-outline" onClick={() => notify('Schema copied to clipboard.')}>
+              <span>Copy JSON Schema</span>
+            </button>
+          </div>
+
+          <div className="table-wrapper">
+            <table className="shadcn-table">
+              <thead>
+                <tr>
+                  <th>Event Name</th>
+                  <th>Trigger Point</th>
+                  <th>Payload Attributes</th>
+                  <th>PII Safe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {steps.map(([name], i) => (
+                  <tr key={name}>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      {name.toLowerCase().replaceAll(' ', '_')}
+                    </td>
+                    <td>{['App launched', 'User created profile', 'Bat connected via BLE', 'Swing sensor logged', '6 overs finished', 'App reopened on day 7'][i]}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                      app_version, user_uuid, ble_rssi, timestamp
+                    </td>
+                    <td>
+                      <span className="badge badge-solid">Guaranteed</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === 'Experiments' && (
+        <div className="activation-grid">
+          <section className="shadcn-card">
+            <div className="card-header">
+              <div>
+                <h2 className="card-title">Active Test: Visual Bluetooth Guided Setup</h2>
+                <p className="card-desc">Hypothesis: 3D interactive bat orientation reduces pairing drop-off</p>
+              </div>
+              <span className="badge badge-solid">Draft</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.8125rem' }}>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem' }}>TARGET AUDIENCE:</div>
+                <div>All new India Android downloads during first launch.</div>
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem' }}>PRIMARY METRIC:</div>
+                <div>Bat pairing completion percentage within 10 minutes of app opening.</div>
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem' }}>GUARDRAIL:</div>
+                <div>Bluetooth reconnection error rate &lt; 0.5%.</div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="shadcn-card">
+            <h3 className="card-title">Rollout Requirements</h3>
+            <p className="card-desc">50/50 randomized split across user UUID hash modulus.</p>
+          </aside>
+        </div>
+      )}
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 6: DATA QUALITY
+   ========================================================================== */
+
+function MetashotQuality({ notify }: { notify: (m: string) => void }) {
+  const [marked, setMarked] = useState(false)
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Data Hygiene & Governance</span>
+          <h1 className="page-title">Dataset Integrity Audit</h1>
+          <p className="page-subtitle">
+            Auditing completeness, deduplication candidates, and boundary caveats across 3 export archives.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => { setMarked(!marked); notify(marked ? 'Reopened review.' : 'Quality verified.') }}>
+            <Check size={15} />
+            <span>{marked ? 'Audit Complete' : 'Mark Reviewed'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-label">Country Completeness</span>
+          <div className="metric-value">92.4%</div>
+          <span className="metric-meta">215,255 of 232,970 records</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Email Key Rate</span>
+          <div className="metric-value">97.2%</div>
+          <span className="metric-meta">215,940 unique keys</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Phone Coverage</span>
+          <div className="metric-value">83.3%</div>
+          <span className="metric-meta">194,146 verified rows</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Dedup Candidates</span>
+          <div className="metric-value">10,860</div>
+          <span className="metric-meta">Cross-export matches</span>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 7: CAMPAIGNS
+   ========================================================================== */
+
+function MetashotCampaigns({
+  approved,
+  setApproved,
+  notify
+}: {
+  approved: boolean
+  setApproved: (b: boolean) => void
+  notify: (m: string) => void
+}) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Outreach Studio</span>
+          <h1 className="page-title">Engagement Brief Builder</h1>
+          <p className="page-subtitle">
+            Plan customer activation communications with consent verification. Simulation mode enabled.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => { setApproved(!approved); notify(approved ? 'Reopened draft.' : 'Campaign brief approved.') }}>
+            <Check size={15} />
+            <span>{approved ? 'Approved' : 'Approve Brief'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="outreach-grid">
+        <section className="shadcn-card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Campaign Brief: India Onboarding Journey</h2>
+              <p className="card-desc">Target cohort: 202,558 declared India app download accounts</p>
+            </div>
+            <span className="badge badge-outline">Simulation</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div className="form-group">
+              <label className="form-label">Subject Line</label>
+              <input className="form-input" defaultValue="Maximize your MetaShot Smart Bat: 3 Quick Setup Tips" readOnly />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Key Message Strategy</label>
+              <div style={{ padding: '0.875rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+                Hi Cricketer,<br /><br />
+                We noticed you recently downloaded the MetaShot companion app. Connect your smart bat via Bluetooth to unlock real-time bat speed, shot power analysis, and interactive match play.<br /><br />
+                Need help pairing? Our guided walkthrough takes less than 60 seconds.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside className="shadcn-card">
+          <h3 className="card-title">Deliverability Checklist</h3>
+          <div className="checklist">
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Explicit consent verified (separate from app install terms).</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Unsubscribe and preference management link embedded.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Direct personal PII isolated behind secure proxy.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 8: JOURNEYS (KANBAN BOARD)
+   ========================================================================== */
+
+function MetashotJourneys() {
+  const columns = [
+    { title: 'Downloaded App', count: 2, items: [accounts[0], accounts[1]] },
+    { title: 'Awaiting Hardware Data', count: 2, items: [accounts[5], accounts[2]] },
+    { title: 'Expansion Research', count: 2, items: [accounts[3], accounts[4]] }
+  ]
+
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Customer Progression</span>
+          <h1 className="page-title">Market Lifecycle Kanban</h1>
+          <p className="page-subtitle">Track accounts and cohorts across data verification stages.</p>
+        </div>
+      </div>
+
+      <div className="kanban-board">
+        {columns.map(col => (
+          <div className="kanban-column" key={col.title}>
+            <div className="kanban-col-header">
+              <span>{col.title}</span>
+              <span className="badge badge-outline">{col.count}</span>
+            </div>
+            {col.items.map(item => (
+              <div className="kanban-card" key={item.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                  <span className="market-avatar">{item.initials}</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{item.name}</div>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{item.category}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.place}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem' }}>
+                  <span className="badge badge-outline">{item.stage}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600 }}>{item.fit}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 9: INSIGHTS
+   ========================================================================== */
+
+function MetashotInsights() {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Analytics Deep Dive</span>
+          <h1 className="page-title">Historical Download Velocity</h1>
+          <p className="page-subtitle">Annual volume trends extracted from raw archive exports.</p>
+        </div>
+      </div>
+
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-label">2024 Total</span>
+          <div className="metric-value">37,649</div>
+          <span className="metric-meta">Full calendar year</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">2025 Total</span>
+          <div className="metric-value">99,802</div>
+          <span className="metric-meta">+165% YoY growth</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">2026 Run Rate</span>
+          <div className="metric-value">95,519</div>
+          <span className="metric-meta">Through Sep 9 only</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Compound Pace</span>
+          <div className="metric-value">+31.2%</div>
+          <span className="metric-meta">Annualized pace</span>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 10: REPORTS
+   ========================================================================== */
+
+function ReportsView({
+  history,
+  role,
+  notify
+}: {
+  history: ImportRecord[]
+  role: Role
+  notify: (m: string) => void
+}) {
+  const downloadReport = () => {
+    const rows = [
+      ['MetaShot Pulse Customer Intelligence Report'],
+      ['Metric', 'Value'],
+      ['Total Records', '232970'],
+      ['Unique Email Keys', '215940'],
+      ['Location Completeness', '92.4%'],
+      [],
+      ['Export Audit History'],
+      ['File', 'Records', 'Duplicates', 'Actor', 'Status'],
+      ...history.map(h => [h.fileName, String(h.records), String(h.duplicates), h.actor, h.status])
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replaceAll('"', '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'metashot-pulse-report.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+    notify('Executive CSV export downloaded.')
+  }
+
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Executive Exports</span>
+          <h1 className="page-title">Intelligence Reports</h1>
+          <p className="page-subtitle">Export aggregate summaries for stakeholders and board review.</p>
+        </div>
+        <div className="page-header-actions">
+          {role !== 'Viewer' && (
+            <button className="btn btn-primary" onClick={downloadReport}>
+              <Download size={15} />
+              <span>Download CSV Report</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      <section className="shadcn-card">
+        <h2 className="card-title">Available Export Datasets</h2>
+        <p className="card-desc">All downloads include verified aggregate counts and data completeness metrics.</p>
+      </section>
+    </>
+  )
+}
+
+/* ==========================================================================
+   VIEW 11: GOVERNANCE & SETTINGS
+   ========================================================================== */
+
+function GovernanceCenter({
+  ready,
+  setReady,
+  notify
+}: {
+  ready: boolean
+  setReady: (b: boolean) => void
+  notify: (m: string) => void
+}) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header-info">
+          <span className="page-eyebrow">Compliance Configuration</span>
+          <h1 className="page-title">Workspace Governance</h1>
+          <p className="page-subtitle">Configure retention windows, audit logging, and team permissions.</p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => { setReady(!ready); notify(ready ? 'Governance reopened.' : 'Governance verified.') }}>
+            <Check size={15} />
+            <span>{ready ? 'Verified' : 'Confirm Readiness'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="governance-grid">
+        <section className="shadcn-card">
+          <h2 className="card-title">Privacy Protection Safeguards</h2>
+          <div className="checklist">
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>All browser processing runs in memory without remote persistence.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Deduplication handles candidate identification without merging records.</span>
+            </div>
+            <div className="check-item">
+              <span className="check-icon-wrap"><Check size={12} /></span>
+              <span>Export logs are cryptographically fingerprinted with audit trails.</span>
+            </div>
+          </div>
+        </section>
+
+        <aside className="shadcn-card">
+          <h3 className="card-title">Retention Schedule</h3>
+          <p className="card-desc">Session aggregate retention: 90 days. Raw records: 0 days (ephemeral).</p>
+        </aside>
+      </div>
+    </>
+  )
+}
